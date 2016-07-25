@@ -29,6 +29,7 @@ public class BubbleService extends Service {
     protected Context mContext;
     private final Map<String, BubbleUI> mItems = new LinkedHashMap<>();
     private IBinder mBinder = new LocalBinder();
+    private static BubbleService sInstance;
 
     public class LocalBinder extends Binder {
         public BubbleService getInstance() {
@@ -41,6 +42,16 @@ public class BubbleService extends Service {
         return mBinder;
     }
 
+    public static BubbleService getInstance() {
+        return sInstance;
+    }
+
+    public static void destroySelf() {
+        if (sInstance != null) {
+            sInstance.stopSelf();
+        }
+    }
+
     public boolean canDrawOverlay() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             boolean canDraw = Settings.canDrawOverlays(this);
@@ -49,7 +60,7 @@ public class BubbleService extends Service {
         }
         return true;
     }
-    
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -62,7 +73,7 @@ public class BubbleService extends Service {
             }
         }
         RemoveItem.get(this);
-
+        sInstance = this;
 //        registerReceivers();
 
     }
@@ -74,7 +85,7 @@ public class BubbleService extends Service {
 
     public void addItem(final BubbleUI newItem) {
         mItems.put(newItem.key, newItem);
-        // Before adding new web heads, call move self to stack distance on existing web heads to move
+        // Before adding new items, call move self to stack distance on existing items to move
         // them a little such that they appear to be stacked
         AnimatorSet animatorSet = new AnimatorSet();
         List<Animator> animators = new LinkedList<>();
@@ -120,7 +131,7 @@ public class BubbleService extends Service {
 //        unregisterReceiver(mStopServiceReceiver);
 
         stopForeground(true);
-
+        sInstance = null;
         RemoveItem.destroy();
         super.onDestroy();
     }
@@ -135,5 +146,5 @@ public class BubbleService extends Service {
         L.d(newConfig.toString());
         // TODO handle webhead positions after orientations change.
     }
-  
+
 }

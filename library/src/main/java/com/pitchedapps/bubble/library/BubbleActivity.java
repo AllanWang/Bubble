@@ -13,7 +13,7 @@ public class BubbleActivity extends AppCompatActivity {
     protected boolean mBounded = false;
     protected BubbleService mBubbleService;
 
-    protected void startOverlayService() {
+    protected void startBubbleService() {
         Intent intent = new Intent(this, BubbleService.class);
         startService(intent);
     }
@@ -52,6 +52,7 @@ public class BubbleActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        startBubbleService();
         bindBubbleService();
     }
 
@@ -59,6 +60,12 @@ public class BubbleActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         unbindBubbleService();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BubbleService.destroySelf();
     }
 
 }

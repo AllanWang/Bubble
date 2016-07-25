@@ -17,12 +17,12 @@ import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringListener;
 import com.facebook.rebound.SpringSystem;
+import com.pitchedapps.bubble.library.physics.MovementTracker;
 import com.pitchedapps.bubble.library.utils.L;
 import com.pitchedapps.bubble.library.utils.Utils;
-import com.pitchedapps.bubble.library.physics.MovementTracker;
 
 /**
- * Web head object which adds draggable and gesture functionality.
+ * item object which adds draggable and gesture functionality.
  */
 @SuppressLint("ViewConstructor")
 public abstract class BubbleUI extends BaseUI implements SpringListener {
@@ -31,7 +31,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
     /**
-     * Coordinate of remove web head that we can lock on to.
+     * Coordinate of remove item that we can lock on to.
      */
     @SuppressWarnings("FieldCanBeLocal")
     private static int[] sTrashLockCoordinate;
@@ -56,7 +56,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private boolean mScaledDown;
     /**
-     * Minimum horizontal velocity that we need to move the web head from one end of the screen
+     * Minimum horizontal velocity that we need to move the item from one end of the screen
      * to another
      */
     private static int MINIMUM_HORIZONTAL_FLING_VELOCITY = 0;
@@ -65,7 +65,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
     /**
-     * Gesture detector to recognize fling and click on web heads
+     * Gesture detector to recognize fling and click on items
      */
     private final GestureDetector mGestureDetector = new GestureDetector(getContext(), new GestureDetectorListener());
     /**
@@ -73,7 +73,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private SpringSystem mSpringSystem;
     /**
-     * Individual springs to control X, Y and scale of the web head
+     * Individual springs to control X, Y and scale of the item
      */
     private Spring mXSpring, mYSpring, mScaleSpring;
 
@@ -95,18 +95,18 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private ItemInteractionListener mInteractionListener = new ItemInteractionListener() {
         @Override
-        public void onItemClick() {
-            // noop
+        public void onItemClick(BubbleUI bubbleUI) {
+
         }
 
         @Override
-        public void onItemDestroyed(boolean isLastItem) {
-            // noop
+        public void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem) {
+
         }
     };
 
     /**
-     * Inits the web head and attaches to the system window. It is assumed that draw over other apps permission is
+     * Inits the item and attaches to the system window. It is assumed that draw over other apps permission is
      * granted for 6.0+.
      *
      * @param context  Service
@@ -181,7 +181,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                     break;
             }
         } catch (NullPointerException e) {
-            String msg = "NPE on web heads " + e.getMessage();
+            String msg = "NPE on items " + e.getMessage();
             L.e(msg);
             destroySelf(true);
         }
@@ -203,7 +203,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Responsible for moving the web heads around and for locking/unlocking the web head to
+     * Responsible for moving the items around and for locking/unlocking the item to
      * remove view.
      *
      * @param event the touch event
@@ -270,7 +270,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Returns the coordinate where the web head should lock to the remove web heads.
+     * Returns the coordinate where the item should lock to the remove items.
      * Calculated once and reused there after.
      *
      * @return array of x and y.
@@ -287,10 +287,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Used to determine if the web head is in vicinity of remove web head view.
+     * Used to determine if the item is in vicinity of remove item view.
      *
-     * @param x Current x position of web head
-     * @param y Current y position of web head
+     * @param x Current x position of item
+     * @param y Current y position of item
      * @return true if near, false other wise
      */
     private boolean isNearRemoveCircle(int x, int y) {
@@ -395,7 +395,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Makes the web head stick to either side of the wall.
+     * Makes the item stick to either side of the wall.
      */
     private void stickToWall() {
         mXSpring.setSpringConfig(FLING_CONFIG);
@@ -421,16 +421,22 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         if (isCurrentlyAtRemove()) {
             closeWithAnimation(receiveCallback);
         } else {
-            if (receiveCallback) mInteractionListener.onItemDestroyed(isLastItem());
+            if (receiveCallback) mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
             super.destroySelf(receiveCallback);
         }
     }
 
     /**
-     * Animates and closes the web head.
+     * Animates and closes the item.
      */
     private void closeWithAnimation(final boolean receiveCallback) {
         final Animator reveal = getRevealInAnimator(mDeleteColor);
+        if (reveal == null) {
+            if (receiveCallback)
+                mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
+            BubbleUI.super.destroySelf(receiveCallback);
+            return;
+        }
         mIcon
                 .animate()
                 .setDuration(200)
@@ -452,7 +458,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                                     @Override
                                     public void run() {
                                         if (receiveCallback)
-                                            mInteractionListener.onItemDestroyed(isLastItem());
+                                            mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
                                         BubbleUI.super.destroySelf(receiveCallback);
                                     }
                                 }, 200);
@@ -465,7 +471,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Helper to know if the web head is currently locked in place with remove web head.
+     * Helper to know if the item is currently locked in place with the remove view.
      *
      * @return true if locked, else false.
      */
@@ -494,19 +500,29 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     public interface ItemInteractionListener {
-        void onItemClick();
+        void onItemClick(BubbleUI bubbleUI);
 
-        void onItemDestroyed(boolean isLastItem);
+        void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem);
     }
 
     /**
-     * A gesture listener class to monitor standard fling and click events on the web head view.
+     * A gesture listener class to monitor standard fling and click events on the item view.
      */
     private class GestureDetectorListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent event) {
             mWasClicked = true;
+            sendCallback();
+            return true;
+        }
+
+        private void sendCallback() {
+            RemoveItem.disappear();
+            mInteractionListener.onItemClick(BubbleUI.this);
+        }
+
+        protected void removeBubble() {
             if (mContentGroup != null) {
                 if (mWindowParams.x < sDispWidth / 2) {
                     mContentGroup.setPivotX(0);
@@ -534,12 +550,6 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                         })
                         .start();
             } else sendCallback();
-            return true;
-        }
-
-        private void sendCallback() {
-            RemoveItem.disappear();
-            mInteractionListener.onItemClick();
         }
 
         @Override
@@ -571,9 +581,9 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
         /**
          * Attempts to figure out the correct X velocity by using {@link #MINIMUM_HORIZONTAL_FLING_VELOCITY}
-         * This is needed since if we blindly upscale the velocity, web heads will jump too quickly
+         * This is needed since if we blindly upscale the velocity, items will jump too quickly
          * when near screen edges. This method proportionally upscales the velocity based on where the
-         * web head was released to prevent quick  jumps.
+         * item was released to prevent quick  jumps.
          *
          * @param upEvent   Motion event of last touch release
          * @param velocityX original velocity

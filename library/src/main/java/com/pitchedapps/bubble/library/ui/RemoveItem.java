@@ -24,8 +24,8 @@ import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.iconics.IconicsDrawable;
-import com.pitchedapps.bubble.library.utils.L;
 import com.pitchedapps.bubble.library.R;
+import com.pitchedapps.bubble.library.utils.L;
 import com.pitchedapps.bubble.library.utils.Utils;
 
 /**
@@ -90,7 +90,7 @@ public class RemoveItem extends FrameLayout {
         if (sOurInstance != null)
             return sOurInstance;
         else {
-            L.d("Creating new instance of remove web head");
+            L.d("Creating new instance of remove item");
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             sOurInstance = new RemoveItem(context, windowManager);
             return sOurInstance;

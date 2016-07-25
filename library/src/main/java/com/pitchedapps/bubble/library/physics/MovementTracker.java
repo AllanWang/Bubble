@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * A helper class for tracking web heads movements. This is needed to correctly apply polarity on calculated velocity
- * by velocity tracker. For example when web head is moved from left to right and top to bottom, the
+ * A helper class for tracking items movements. This is needed to correctly apply polarity on calculated velocity
+ * by velocity tracker. For example when item is moved from left to right and top to bottom, the
  * X and Y velocity should be positive. Sometimes that is not the case with raw values given by {@link android.view.VelocityTracker}
  */
 public class MovementTracker {

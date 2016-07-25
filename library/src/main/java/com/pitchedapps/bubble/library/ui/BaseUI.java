@@ -2,7 +2,6 @@ package com.pitchedapps.bubble.library.ui;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -12,6 +11,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.IdRes;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -35,29 +35,29 @@ import com.pitchedapps.bubble.library.utils.Utils;
 
 
 /**
- * ViewGroup that holds the web head UI elements. Allows configuring various parameters in relation
+ * ViewGroup that holds the item UI elements. Allows configuring various parameters in relation
  * to UI like favicon, text indicator and is responsible for inflating all the content.
  */
 public abstract class BaseUI extends FrameLayout {
     protected Context mContext;
     /**
-     * Distance in pixels to be displaced when web heads are getting stacked
+     * Distance in pixels to be displaced when items are getting stacked
      */
     private static final int STACKING_GAP_PX = Utils.dpToPx(6);
     /**
-     * Helper instance to know screen boundaries that web head is allowed to travel
+     * Helper instance to know screen boundaries that item is allowed to travel
      */
     static ScreenBounds sScreenBounds;
     /**
-     * Counter to keep count of active web heads
+     * Counter to keep count of active items
      */
     static int ITEM_COUNT = 0;
     /**
-     * Static window manager instance to update, add and remove web heads
+     * Static window manager instance to update, add and remove items
      */
     private static WindowManager sWindowManager;
     /**
-     * Window parameters used to track and update web heads post creation;
+     * Window parameters used to track and update items post creation;
      */
     WindowManager.LayoutParams mWindowParams;
     /**
@@ -67,18 +67,18 @@ public abstract class BaseUI extends FrameLayout {
 
     int sDispWidth, sDispHeight;
     /**
-     * Flag to know if the user moved manually or if the web heads is still resting
+     * Flag to know if the user moved manually or if the items is still resting
      */
     boolean mUserManuallyMoved;
     /**
-     * If web head was issued with destroy before.
+     * If item was issued with destroy before.
      */
     boolean mDestroyed;
     /**
      * X icon drawable used when closing
      */
     private static Drawable sXDrawable;
-    protected ImageView mIcon;
+    public ImageView mIcon;
     /**
      * The content view group which host all our elements
      */
@@ -96,6 +96,11 @@ public abstract class BaseUI extends FrameLayout {
         return (FrameLayout) LayoutInflater.from(getContext()).inflate(id, this, false);
     }
 
+    protected ImageView getImageViewFromID(@IdRes int id) {
+        if (mContentGroup == null) return null;
+        return (ImageView) findViewById(id);
+    }
+
     BaseUI(@NonNull Context context)  {
         super(context);
         mContext = context;
@@ -103,8 +108,8 @@ public abstract class BaseUI extends FrameLayout {
         sWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
 
         mContentGroup = inflateContent(context);
-        mIcon = setImageView(mContentGroup);
         addView(mContentGroup);
+        mIcon = setImageView(mContentGroup);
 
         mWindowParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -176,7 +181,7 @@ public abstract class BaseUI extends FrameLayout {
     }
 
     /**
-     * Wrapper around window manager to update this view. Called to move the web head usually.
+     * Wrapper around window manager to update this view. Called to move the item usually.
      */
     void updateView() {
         try {
@@ -187,7 +192,7 @@ public abstract class BaseUI extends FrameLayout {
     }
 
     /**
-     * @return true if current web head is the last active one
+     * @return true if current item is the last active one
      */
     boolean isLastItem() {
         return ITEM_COUNT == 0;
@@ -313,7 +318,7 @@ public abstract class BaseUI extends FrameLayout {
      */
     class ScreenBounds {
         /**
-         * Amount of web head that will be displaced off of the screen horizontally
+         * Amount of item that will be displaced off of the screen horizontally
          */
         private static final double DISPLACE_PERC = 0.7;
 
@@ -324,7 +329,7 @@ public abstract class BaseUI extends FrameLayout {
 
         public ScreenBounds(int dispWidth, int dispHeight, int webHeadWidth) {
             if (webHeadWidth == 0 || dispWidth == 0 || dispHeight == 0) {
-                throw new IllegalArgumentException("Width of web head or screen size cannot be 0");
+                throw new IllegalArgumentException("Width of item or screen size cannot be 0");
             }
             right = (int) (dispWidth - (webHeadWidth * DISPLACE_PERC));
             left = (int) (webHeadWidth * (1 - DISPLACE_PERC)) * -1;

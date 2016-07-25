@@ -1,17 +1,20 @@
 package com.pitchedapps.bubble.sample;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.pitchedapps.bubble.library.BubbleActivity;
-import com.pitchedapps.bubble.sample.R;
+import com.pitchedapps.bubble.library.ui.BubbleUI;
 
-public class MainActivity extends BubbleActivity {
+import java.util.Random;
+
+public class MainActivity extends BubbleActivity implements BubbleUI.ItemInteractionListener {
 
     private int i = 0;
 
@@ -28,7 +31,7 @@ public class MainActivity extends BubbleActivity {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 if (mBounded) {
-                    TestUI testUI = new TestUI(MainActivity.this, String.valueOf(i), null);
+                    TestUI testUI = new TestUI(/*Context*/ MainActivity.this, String.valueOf(i), /*ItemInteractionListener*/ MainActivity.this);
                     mBubbleService.addItem(testUI);
                     i++;
                 }
@@ -65,5 +68,17 @@ public class MainActivity extends BubbleActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(BubbleUI bubbleUI) {
+        Random rnd = new Random();
+        int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+        bubbleUI.mIcon.setBackgroundColor(color);
+    }
+
+    @Override
+    public void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem) {
+
     }
 }

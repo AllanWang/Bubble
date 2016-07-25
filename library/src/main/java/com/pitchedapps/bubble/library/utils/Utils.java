@@ -1,13 +1,10 @@
 package com.pitchedapps.bubble.library.utils;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -20,8 +17,6 @@ import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewOutlineProvider;
-
-import java.util.List;
 
 /**
  * Created by Arun on 17/12/2015.

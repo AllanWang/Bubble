@@ -9,12 +9,12 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.pitchedapps.bubble.library.ui.BubbleUI;
-import com.pitchedapps.bubble.sample.R;
 
 /**
  * Created by Allan Wang on 2016-07-24.
  */
 public class TestUI extends BubbleUI {
+
     /**
      * Inits the web head and attaches to the system window. It is assumed that draw over other apps permission is
      * granted for 6.0+.
@@ -36,7 +36,7 @@ public class TestUI extends BubbleUI {
     @NonNull
     @Override
     protected ImageView setImageView(FrameLayout frameLayout) {
-        return (ImageView) frameLayout.findViewById(R.id.test);
+        return getImageViewFromID(R.id.test);
     }
 
     @Override
