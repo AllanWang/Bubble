@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:tools="http://schemas.android.com/tools"
+             android:layout_width="@dimen/web_head_size_normal"
+             android:layout_height="@dimen/web_head_size_normal"
+             android:clipToPadding="false"
+             android:orientation="vertical"
+             android:padding="10dp">
+
+    <ImageView
+        android:background="#f0f"
+        android:id="@+id/test"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:elevation="6dp"
+        android:scaleType="fitCenter"
+        tools:ignore="ContentDescription, UnusedAttribute"/>
+
+</FrameLayout>
