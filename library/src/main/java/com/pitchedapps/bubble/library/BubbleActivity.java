@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 public class BubbleActivity extends AppCompatActivity {
     protected boolean mBounded = false;
     protected BubbleService mBubbleService;
+    private boolean serviceFirstRun = true;
 
     protected void startBubbleService() {
         Intent intent = new Intent(this, BubbleService.class);
@@ -33,6 +34,10 @@ public class BubbleActivity extends AppCompatActivity {
         }
     }
 
+    protected void onServiceFirstRun() {
+
+    }
+
     ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -46,6 +51,10 @@ public class BubbleActivity extends AppCompatActivity {
             mBounded = true;
             BubbleService.LocalBinder mLocalBinder = (BubbleService.LocalBinder) service;
             mBubbleService = mLocalBinder.getInstance();
+            if (serviceFirstRun) {
+                onServiceFirstRun();
+                serviceFirstRun = false;
+            }
         }
     };
 

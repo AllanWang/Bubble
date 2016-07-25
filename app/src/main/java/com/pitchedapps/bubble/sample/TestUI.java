@@ -20,10 +20,10 @@ public class TestUI extends BubbleUI {
      * granted for 6.0+.
      *
      * @param context  Service
-     * @param key      Key for item for the linkedhashmap
+     * @param key      Key for bubble for the linkedhashmap
      * @param listener for listening to events on the webhead
      */
-    public TestUI(@NonNull Context context, @NonNull String key, @Nullable ItemInteractionListener listener) {
+    public TestUI(@NonNull Context context, @NonNull String key, @Nullable BubbleInteractionListener listener) {
         super(context, key, listener);
     }
 

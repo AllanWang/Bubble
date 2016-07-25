@@ -22,16 +22,17 @@ import com.pitchedapps.bubble.library.utils.L;
 import com.pitchedapps.bubble.library.utils.Utils;
 
 /**
- * item object which adds draggable and gesture functionality.
+ * bubble object which adds draggable and gesture functionality.
  */
 @SuppressLint("ViewConstructor")
 public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     public String key;
+    public boolean IS_LINKED_AND_FIRST = false;
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
     /**
-     * Coordinate of remove item that we can lock on to.
+     * Coordinate of remove bubble that we can lock on to.
      */
     @SuppressWarnings("FieldCanBeLocal")
     private static int[] sTrashLockCoordinate;
@@ -56,7 +57,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private boolean mScaledDown;
     /**
-     * Minimum horizontal velocity that we need to move the item from one end of the screen
+     * Minimum horizontal velocity that we need to move the bubble from one end of the screen
      * to another
      */
     private static int MINIMUM_HORIZONTAL_FLING_VELOCITY = 0;
@@ -65,7 +66,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
     /**
-     * Gesture detector to recognize fling and click on items
+     * Gesture detector to recognize fling and click on bubbles
      */
     private final GestureDetector mGestureDetector = new GestureDetector(getContext(), new GestureDetectorListener());
     /**
@@ -73,7 +74,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private SpringSystem mSpringSystem;
     /**
-     * Individual springs to control X, Y and scale of the item
+     * Individual springs to control X, Y and scale of the bubble
      */
     private Spring mXSpring, mYSpring, mScaleSpring;
 
@@ -93,27 +94,34 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     /**
      * The interaction listener that clients can provide to listen for events on webhead.
      */
-    private ItemInteractionListener mInteractionListener = new ItemInteractionListener() {
+    private BubbleInteractionListener mInteractionListener = new BubbleInteractionListener() {
         @Override
-        public void onItemClick(BubbleUI bubbleUI) {
+        public void onBubbleClick(BubbleUI bubbleUI) {
 
         }
 
         @Override
-        public void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem) {
+        public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
+
+        }
+    };
+
+    private BubbleUIServiceListener mServiceListener = new BubbleUIServiceListener() {
+        @Override
+        public void onBubbleSpringUpdate(Spring spring) {
 
         }
     };
 
     /**
-     * Inits the item and attaches to the system window. It is assumed that draw over other apps permission is
+     * Inits the bubble and attaches to the system window. It is assumed that draw over other apps permission is
      * granted for 6.0+.
      *
      * @param context  Service
-     * @param key      Key for item for the linkedhashmap
+     * @param key      Key for bubble for the linkedhashmap
      * @param listener for listening to events on the webhead
      */
-    public BubbleUI(@NonNull Context context, @NonNull String key, @Nullable ItemInteractionListener listener) {
+    public BubbleUI(@NonNull Context context, @NonNull String key, @Nullable BubbleInteractionListener listener) {
         super(context);
         if (listener != null) {
             mInteractionListener = listener;
@@ -124,6 +132,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         calcVelocities();
 
         setupSprings();
+    }
+
+    public void addServiceListener(BubbleUIServiceListener serviceListener) {
+        mServiceListener = serviceListener;
     }
 
     protected void calcVelocities() {
@@ -181,7 +193,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                     break;
             }
         } catch (NullPointerException e) {
-            String msg = "NPE on items " + e.getMessage();
+            String msg = "NPE on bubbles " + e.getMessage();
             L.e(msg);
             destroySelf(true);
         }
@@ -203,7 +215,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Responsible for moving the items around and for locking/unlocking the item to
+     * Responsible for moving the bubbles around and for locking/unlocking the bubble to
      * remove view.
      *
      * @param event the touch event
@@ -265,12 +277,12 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         }
         touchUp();
         // hide remove view
-        RemoveItem.disappear();
+        RemoveBubble.disappear();
         return false;
     }
 
     /**
-     * Returns the coordinate where the item should lock to the remove items.
+     * Returns the coordinate where the bubble should lock to the remove bubbles.
      * Calculated once and reused there after.
      *
      * @return array of x and y.
@@ -287,10 +299,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Used to determine if the item is in vicinity of remove item view.
+     * Used to determine if the bubble is in vicinity of remove bubble view.
      *
-     * @param x Current x position of item
-     * @param y Current y position of item
+     * @param x Current x position of bubble
+     * @param y Current y position of bubble
      * @return true if near, false other wise
      */
     private boolean isNearRemoveCircle(int x, int y) {
@@ -302,7 +314,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         x += offset;
         y += offset;
 
-        if (dist(rX, rY, x, y) < RemoveItem.MAGNETISM_THRESHOLD) {
+        if (dist(rX, rY, x, y) < RemoveBubble.MAGNETISM_THRESHOLD) {
             mWasRemoveLocked = true;
             return true;
         } else {
@@ -336,6 +348,14 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     @Override
     public void onSpringUpdate(Spring spring) {
+        if (IS_LINKED_AND_FIRST) {
+            mServiceListener.onBubbleSpringUpdate(spring);
+        } else {
+            updateSpring(spring);
+        }
+    }
+
+    public void updateSpring(Spring spring) {
         mWindowParams.x = (int) mXSpring.getCurrentValue();
         mWindowParams.y = (int) mYSpring.getCurrentValue();
         updateView();
@@ -395,7 +415,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Makes the item stick to either side of the wall.
+     * Makes the bubble stick to either side of the wall.
      */
     private void stickToWall() {
         mXSpring.setSpringConfig(FLING_CONFIG);
@@ -416,24 +436,24 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     @Override
     public void destroySelf(final boolean receiveCallback) {
         mDestroyed = true;
-        ITEM_COUNT--;
+        BUBBLE_COUNT--;
         destroySprings();
         if (isCurrentlyAtRemove()) {
             closeWithAnimation(receiveCallback);
         } else {
-            if (receiveCallback) mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
+            if (receiveCallback) mInteractionListener.onBubbleDestroyed(BubbleUI.this, isLastBubble());
             super.destroySelf(receiveCallback);
         }
     }
 
     /**
-     * Animates and closes the item.
+     * Animates and closes the bubble.
      */
     private void closeWithAnimation(final boolean receiveCallback) {
         final Animator reveal = getRevealInAnimator(mDeleteColor);
         if (reveal == null) {
             if (receiveCallback)
-                mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
+                mInteractionListener.onBubbleDestroyed(BubbleUI.this, isLastBubble());
             BubbleUI.super.destroySelf(receiveCallback);
             return;
         }
@@ -458,7 +478,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                                     @Override
                                     public void run() {
                                         if (receiveCallback)
-                                            mInteractionListener.onItemDestroyed(BubbleUI.this, isLastItem());
+                                            mInteractionListener.onBubbleDestroyed(BubbleUI.this, isLastBubble());
                                         BubbleUI.super.destroySelf(receiveCallback);
                                     }
                                 }, 200);
@@ -471,7 +491,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     /**
-     * Helper to know if the item is currently locked in place with the remove view.
+     * Helper to know if the bubble is currently locked in place with the remove view.
      *
      * @return true if locked, else false.
      */
@@ -499,14 +519,17 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         mYSpring.destroy();
     }
 
-    public interface ItemInteractionListener {
-        void onItemClick(BubbleUI bubbleUI);
+    public interface BubbleInteractionListener {
+        void onBubbleClick(BubbleUI bubbleUI);
+        void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble);
+    }
 
-        void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem);
+    public interface BubbleUIServiceListener {
+        void onBubbleSpringUpdate(Spring spring);
     }
 
     /**
-     * A gesture listener class to monitor standard fling and click events on the item view.
+     * A gesture listener class to monitor standard fling and click events on the bubble view.
      */
     private class GestureDetectorListener extends GestureDetector.SimpleOnGestureListener {
 
@@ -518,8 +541,8 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         }
 
         private void sendCallback() {
-            RemoveItem.disappear();
-            mInteractionListener.onItemClick(BubbleUI.this);
+            RemoveBubble.disappear();
+            mInteractionListener.onBubbleClick(BubbleUI.this);
         }
 
         protected void removeBubble() {
@@ -581,9 +604,9 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
         /**
          * Attempts to figure out the correct X velocity by using {@link #MINIMUM_HORIZONTAL_FLING_VELOCITY}
-         * This is needed since if we blindly upscale the velocity, items will jump too quickly
+         * This is needed since if we blindly upscale the velocity, bubbles will jump too quickly
          * when near screen edges. This method proportionally upscales the velocity based on where the
-         * item was released to prevent quick  jumps.
+         * bubble was released to prevent quick  jumps.
          *
          * @param upEvent   Motion event of last touch release
          * @param velocityX original velocity

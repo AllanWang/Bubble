@@ -32,11 +32,11 @@ import com.pitchedapps.bubble.library.utils.Utils;
  * Created by Arun on 03/02/2016.
  */
 @SuppressLint("ViewConstructor")
-public class RemoveItem extends FrameLayout {
+public class RemoveBubble extends FrameLayout {
 
     static final double MAGNETISM_THRESHOLD = Utils.dpToPx(120);
     private static WindowManager sWindowManager;
-    private static RemoveItem sOurInstance;
+    private static RemoveBubble sOurInstance;
 
     private WindowManager.LayoutParams mWindowParams;
 
@@ -48,19 +48,19 @@ public class RemoveItem extends FrameLayout {
 
     private boolean mHidden;
 
-    private RemoveItemCircle mRemoveItemCircle;
+    private RemoveBubbleCircle mRemoveBubbleCircle;
 
     private boolean mGrew;
 
     private int[] mCentrePoint = null;
 
     @SuppressLint("RtlHardcoded")
-    private RemoveItem(Context context, WindowManager windowManager) {
+    private RemoveBubble(Context context, WindowManager windowManager) {
         super(context);
         sWindowManager = windowManager;
 
-        mRemoveItemCircle = new RemoveItemCircle(context);
-        addView(mRemoveItemCircle);
+        mRemoveBubbleCircle = new RemoveBubbleCircle(context);
+        addView(mRemoveBubbleCircle);
 
         mWindowParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -86,13 +86,13 @@ public class RemoveItem extends FrameLayout {
         sWindowManager.addView(this, mWindowParams);
     }
 
-    public static RemoveItem get(Context context) {
+    public static RemoveBubble get(Context context) {
         if (sOurInstance != null)
             return sOurInstance;
         else {
-            L.d("Creating new instance of remove item");
+            L.d("Creating new instance of remove bubble");
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-            sOurInstance = new RemoveItem(context, windowManager);
+            sOurInstance = new RemoveBubble(context, windowManager);
             return sOurInstance;
         }
     }
@@ -113,9 +113,9 @@ public class RemoveItem extends FrameLayout {
     public ViewPropertyAnimator destroyAnimator() {
         if (sOurInstance == null) return null;
 
-        if (mRemoveItemCircle == null) return null;
+        if (mRemoveBubbleCircle == null) return null;
 
-        return sOurInstance.mRemoveItemCircle.animate()
+        return sOurInstance.mRemoveBubbleCircle.animate()
                 .scaleX(0.0f)
                 .scaleY(0.0f)
                 .alpha(0.5f)
@@ -128,8 +128,8 @@ public class RemoveItem extends FrameLayout {
         mScaleSpring.destroy();
         mScaleSpring = null;
 
-        removeView(mRemoveItemCircle);
-        mRemoveItemCircle = null;
+        removeView(mRemoveBubbleCircle);
+        mRemoveBubbleCircle = null;
 
         mWindowParams = null;
 
@@ -144,7 +144,7 @@ public class RemoveItem extends FrameLayout {
     }
 
     private int getAdaptWidth() {
-        return Math.max(getWidth(), RemoveItemCircle.getSizePx());
+        return Math.max(getWidth(), RemoveBubbleCircle.getSizePx());
     }
 
     int[] getCenterCoordinates() {
@@ -171,8 +171,8 @@ public class RemoveItem extends FrameLayout {
             @Override
             public void onSpringUpdate(Spring spring) {
                 float value = (float) spring.getCurrentValue();
-                mRemoveItemCircle.setScaleX(value);
-                mRemoveItemCircle.setScaleY(value);
+                mRemoveBubbleCircle.setScaleX(value);
+                mRemoveBubbleCircle.setScaleY(value);
             }
         });
     }
@@ -221,13 +221,13 @@ public class RemoveItem extends FrameLayout {
     /**
      * Created by Arun on 04/02/2016.
      */
-    private static class RemoveItemCircle extends View {
+    private static class RemoveBubbleCircle extends View {
 
         private static int sSizePx;
         private static int sDiameterPx;
         private final Paint mBgPaint;
 
-        public RemoveItemCircle(Context context) {
+        public RemoveBubbleCircle(Context context) {
             super(context);
             mBgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             mBgPaint.setColor(ContextCompat.getColor(getContext(), R.color.remove_web_head_color));

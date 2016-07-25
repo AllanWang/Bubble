@@ -12,8 +12,9 @@ import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
 
+import com.facebook.rebound.Spring;
 import com.pitchedapps.bubble.library.ui.BubbleUI;
-import com.pitchedapps.bubble.library.ui.RemoveItem;
+import com.pitchedapps.bubble.library.ui.RemoveBubble;
 import com.pitchedapps.bubble.library.utils.L;
 
 import java.util.LinkedHashMap;
@@ -24,17 +25,46 @@ import java.util.Map;
 /**
  * Created by Allan Wang on 2016-07-09.
  */
-public class BubbleService extends Service {
+public class BubbleService extends Service implements BubbleUI.BubbleUIServiceListener{
 
     protected Context mContext;
-    private final Map<String, BubbleUI> mItems = new LinkedHashMap<>();
+    private final Map<String, BubbleUI> mBubbles = new LinkedHashMap<>();
     private IBinder mBinder = new LocalBinder();
     private static BubbleService sInstance;
+    private static boolean linkedBubbles = false;
+
+    @Override
+    public void onBubbleSpringUpdate(Spring spring) {
+        if (!linkedBubbles) return;
+        for (BubbleUI bubble : mBubbles.values()) {
+            bubble.updateSpring(spring);
+        }
+    }
 
     public class LocalBinder extends Binder {
         public BubbleService getInstance() {
             return BubbleService.this;
         }
+    }
+
+    public void linkBubbles() {
+        linkedBubbles = true;
+    }
+
+    public void unlinkBubbles() {
+        linkedBubbles = false;
+    }
+
+    public void updateBubbleLinkStatus() {
+        for (BubbleUI bubble : mBubbles.values()) {
+            bubble.IS_LINKED_AND_FIRST = false;
+        }
+        getFirstBubble().IS_LINKED_AND_FIRST = linkedBubbles;
+    }
+
+    public BubbleUI getFirstBubble() {
+        String key = mBubbles.keySet().iterator().next();
+        return mBubbles.get(key);
     }
 
     @Override
@@ -72,7 +102,7 @@ public class BubbleService extends Service {
                 return;
             }
         }
-        RemoveItem.get(this);
+        RemoveBubble.get(this);
         sInstance = this;
 //        registerReceivers();
 
@@ -83,14 +113,14 @@ public class BubbleService extends Service {
         return START_STICKY;
     }
 
-    public void addItem(final BubbleUI newItem) {
-        mItems.put(newItem.key, newItem);
-        // Before adding new items, call move self to stack distance on existing items to move
+    public void addBubble(final BubbleUI newBubble) {
+        mBubbles.put(newBubble.key, newBubble);
+        // Before adding new bubbles, call move self to stack distance on existing bubbles to move
         // them a little such that they appear to be stacked
         AnimatorSet animatorSet = new AnimatorSet();
         List<Animator> animators = new LinkedList<>();
-        for (BubbleUI item : mItems.values()) {
-            Animator anim = item.getStackDistanceAnimator();
+        for (BubbleUI bubble : mBubbles.values()) {
+            Animator anim = bubble.getStackDistanceAnimator();
             if (anim != null) animators.add(anim);
         }
         animatorSet.playTogether(animators);
@@ -98,46 +128,54 @@ public class BubbleService extends Service {
             @Override
             public void onAnimationEnd(Animator animation) {
                 //noinspection ConstantConditions
-                if (newItem != null) newItem.reveal();
+                if (newBubble != null) {
+                    newBubble.reveal();
+                    newBubble.addServiceListener(BubbleService.this);
+                    newBubble.IS_LINKED_AND_FIRST = linkedBubbles;
+                }
             }
         });
         animatorSet.start();
     }
 
     public boolean isKeyAlreadyUsed(String key) {
-        return key == null || mItems.containsKey(key);
+        return key == null || mBubbles.containsKey(key);
     }
 
-    public void removeItem(String key) {
-        if (!mItems.containsKey(key)) return;
-        mItems.remove(key);
+    public void removeBubble(String key) {
+        if (!mBubbles.containsKey(key)) return;
+        mBubbles.remove(key);
     }
 
-    public void destroyAllItems() {
-        for (BubbleUI item : mItems.values()) {
-            if (item != null) item.destroySelf(false);
+    public void destroyAllBubbles() {
+        for (BubbleUI bubble : mBubbles.values()) {
+            if (bubble != null) bubble.destroySelf(false);
         }
         // Since no callback is received clear the map manually.
-        mItems.clear();
-        L.d("Items: %d", mItems.size());
+        mBubbles.clear();
+        L.d("Bubbles: %d", mBubbles.size());
+    }
+
+    public int getBubbleCount() {
+        return mBubbles.size();
     }
 
     @Override
     public void onDestroy() {
         L.d("Exiting Bubble service");
-        destroyAllItems();
+        destroyAllBubbles();
 
 //        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLocalReceiver);
 //        unregisterReceiver(mStopServiceReceiver);
 
         stopForeground(true);
         sInstance = null;
-        RemoveItem.destroy();
+        RemoveBubble.destroy();
         super.onDestroy();
     }
 
     public void hideRemoveView() {
-        RemoveItem.disappear();
+        RemoveBubble.disappear();
     }
 
     @Override

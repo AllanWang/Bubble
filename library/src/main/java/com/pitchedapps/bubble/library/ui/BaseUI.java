@@ -35,43 +35,43 @@ import com.pitchedapps.bubble.library.utils.Utils;
 
 
 /**
- * ViewGroup that holds the item UI elements. Allows configuring various parameters in relation
+ * ViewGroup that holds the bubble UI elements. Allows configuring various parameters in relation
  * to UI like favicon, text indicator and is responsible for inflating all the content.
  */
 public abstract class BaseUI extends FrameLayout {
     protected Context mContext;
     /**
-     * Distance in pixels to be displaced when items are getting stacked
+     * Distance in pixels to be displaced when bubbles are getting stacked
      */
     private static final int STACKING_GAP_PX = Utils.dpToPx(6);
     /**
-     * Helper instance to know screen boundaries that item is allowed to travel
+     * Helper instance to know screen boundaries that bubble is allowed to travel
      */
     static ScreenBounds sScreenBounds;
     /**
-     * Counter to keep count of active items
+     * Counter to keep count of active bubbles
      */
-    static int ITEM_COUNT = 0;
+    static int BUBBLE_COUNT = 0;
     /**
-     * Static window manager instance to update, add and remove items
+     * Static window manager instance to update, add and remove bubbles
      */
     private static WindowManager sWindowManager;
     /**
-     * Window parameters used to track and update items post creation;
+     * Window parameters used to track and update bubbles post creation;
      */
     WindowManager.LayoutParams mWindowParams;
     /**
-     * Color of the item when removed
+     * Color of the bubble when removed
      */
     int mDeleteColor = 0xffff1744;
 
     int sDispWidth, sDispHeight;
     /**
-     * Flag to know if the user moved manually or if the items is still resting
+     * Flag to know if the user moved manually or if the bubbles is still resting
      */
     boolean mUserManuallyMoved;
     /**
-     * If item was issued with destroy before.
+     * If bubble was issued with destroy before.
      */
     boolean mDestroyed;
     /**
@@ -124,7 +124,7 @@ public abstract class BaseUI extends FrameLayout {
         initDisplayMetrics();
         setSpawnLocation();
 
-        ITEM_COUNT++;
+        BUBBLE_COUNT++;
 
         sWindowManager.addView(this, mWindowParams);
 
@@ -174,14 +174,14 @@ public abstract class BaseUI extends FrameLayout {
     /**
      * Used to get an instance of remove view
      *
-     * @return an instance of {@link RemoveItem}
+     * @return an instance of {@link RemoveBubble}
      */
-    RemoveItem getRemoveView() {
-        return RemoveItem.get(getContext());
+    RemoveBubble getRemoveView() {
+        return RemoveBubble.get(getContext());
     }
 
     /**
-     * Wrapper around window manager to update this view. Called to move the item usually.
+     * Wrapper around window manager to update this view. Called to move the bubble usually.
      */
     void updateView() {
         try {
@@ -192,10 +192,10 @@ public abstract class BaseUI extends FrameLayout {
     }
 
     /**
-     * @return true if current item is the last active one
+     * @return true if current bubble is the last active one
      */
-    boolean isLastItem() {
-        return ITEM_COUNT == 0;
+    boolean isLastBubble() {
+        return BUBBLE_COUNT == 0;
     }
 
     //Should be written from lowest to highest
@@ -225,7 +225,7 @@ public abstract class BaseUI extends FrameLayout {
                     updateView();
                 }
             });
-            if (ITEM_COUNT > 2) {
+            if (BUBBLE_COUNT > 2) {
                 setViewElevations(Utils.dpToPx(4));
             }
         }
@@ -307,7 +307,7 @@ public abstract class BaseUI extends FrameLayout {
     @SuppressWarnings("UnusedParameters")
     void destroySelf(final boolean receiveCallback) {
         mDestroyed = true;
-        RemoveItem.disappear();
+        RemoveBubble.disappear();
         removeView(mContentGroup);
         if (sWindowManager != null)
             sWindowManager.removeView(this);
@@ -318,7 +318,7 @@ public abstract class BaseUI extends FrameLayout {
      */
     class ScreenBounds {
         /**
-         * Amount of item that will be displaced off of the screen horizontally
+         * Amount of bubble that will be displaced off of the screen horizontally
          */
         private static final double DISPLACE_PERC = 0.7;
 
@@ -329,7 +329,7 @@ public abstract class BaseUI extends FrameLayout {
 
         public ScreenBounds(int dispWidth, int dispHeight, int webHeadWidth) {
             if (webHeadWidth == 0 || dispWidth == 0 || dispHeight == 0) {
-                throw new IllegalArgumentException("Width of item or screen size cannot be 0");
+                throw new IllegalArgumentException("Width of bubble or screen size cannot be 0");
             }
             right = (int) (dispWidth - (webHeadWidth * DISPLACE_PERC));
             left = (int) (webHeadWidth * (1 - DISPLACE_PERC)) * -1;

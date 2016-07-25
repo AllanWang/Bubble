@@ -14,9 +14,14 @@ import com.pitchedapps.bubble.library.ui.BubbleUI;
 
 import java.util.Random;
 
-public class MainActivity extends BubbleActivity implements BubbleUI.ItemInteractionListener {
+public class MainActivity extends BubbleActivity implements BubbleUI.BubbleInteractionListener {
 
     private int i = 0;
+
+    @Override
+    protected void onServiceFirstRun() {
+        mBubbleService.linkBubbles();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,8 +36,8 @@ public class MainActivity extends BubbleActivity implements BubbleUI.ItemInterac
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 if (mBounded) {
-                    TestUI testUI = new TestUI(/*Context*/ MainActivity.this, String.valueOf(i), /*ItemInteractionListener*/ MainActivity.this);
-                    mBubbleService.addItem(testUI);
+                    TestUI testUI = new TestUI(/*Context*/ MainActivity.this, String.valueOf(i), /*BubbleInteractionListener*/ MainActivity.this);
+                    mBubbleService.addBubble(testUI);
                     i++;
                 }
 //                launchCustomTab();
@@ -71,14 +76,14 @@ public class MainActivity extends BubbleActivity implements BubbleUI.ItemInterac
     }
 
     @Override
-    public void onItemClick(BubbleUI bubbleUI) {
+    public void onBubbleClick(BubbleUI bubbleUI) {
         Random rnd = new Random();
         int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
         bubbleUI.mIcon.setBackgroundColor(color);
     }
 
     @Override
-    public void onItemDestroyed(BubbleUI bubbleUI, boolean isLastItem) {
+    public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
 
     }
 }
