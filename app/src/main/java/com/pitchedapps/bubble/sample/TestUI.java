@@ -21,10 +21,9 @@ public class TestUI extends BubbleUI {
      *
      * @param context  Service
      * @param key      Key for bubble for the linkedhashmap
-     * @param listener for listening to events on the webhead
      */
-    public TestUI(@NonNull Context context, @NonNull String key, @Nullable BubbleInteractionListener listener) {
-        super(context, key, listener);
+    public TestUI(@NonNull Context context, @NonNull String key) {
+        super(context, key);
     }
 
     @NonNull

@@ -109,7 +109,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     private BubbleUIServiceListener mServiceListener = new BubbleUIServiceListener() {
         @Override
-        public void onBubbleSpringUpdate(Spring sXSpring, Spring sYSPring) {
+        public void onBubbleSpringPositionUpdate(int x, int y) {
 
         }
     };
@@ -120,19 +120,22 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      *
      * @param context  Service
      * @param key      Key for bubble for the linkedhashmap
-     * @param listener for listening to events on the webhead
      */
-    public BubbleUI(@NonNull Context context, @NonNull String key, @Nullable BubbleInteractionListener listener) {
+    public BubbleUI(@NonNull Context context, @NonNull String key) {
         super(context);
-        if (listener != null) {
-            mInteractionListener = listener;
-        }
+
         this.key = key;
         mMovementTracker = MovementTracker.obtain();
 
         calcVelocities();
 
         setupSprings();
+    }
+
+    public void addInteractionListener(@Nullable BubbleInteractionListener listener) {
+        if (listener != null) {
+            mInteractionListener = listener;
+        }
     }
 
     public void addServiceListener(BubbleUIServiceListener serviceListener) {
@@ -366,15 +369,16 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     @Override
     public void onSpringUpdate(Spring spring) {
         if (position == 0 && linked) {
-            mServiceListener.onBubbleSpringUpdate(mXSpring, mYSpring);
+            mServiceListener.onBubbleSpringPositionUpdate((int) mXSpring.getCurrentValue(), (int) mYSpring.getCurrentValue());
         } else if (!linked) {
-            updateSpring(mXSpring, mYSpring);
+            updateBubblePosition((int) mXSpring.getCurrentValue(), (int) mYSpring.getCurrentValue());
         }
     }
 
-    public void updateSpring(Spring sXSPring, Spring sYSpring) {
-        mWindowParams.x = (int) sXSPring.getCurrentValue();
-        mWindowParams.y = (int) sYSpring.getCurrentValue();
+    public void updateBubblePosition(int x, int y) {
+        mWindowParams.x = x;
+        y += position * BaseUI.STACKING_GAP_PX;
+        mWindowParams.y = y;
         updateView();
         checkBounds();
     }
@@ -458,7 +462,8 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         if (isCurrentlyAtRemove()) {
             closeWithAnimation(receiveCallback);
         } else {
-            if (receiveCallback) mInteractionListener.onBubbleDestroyed(BubbleUI.this, isLastBubble());
+            if (receiveCallback)
+                mInteractionListener.onBubbleDestroyed(BubbleUI.this, isLastBubble());
             super.destroySelf(receiveCallback);
         }
     }
@@ -538,11 +543,12 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     public interface BubbleInteractionListener {
         void onBubbleClick(BubbleUI bubbleUI);
+
         void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble);
     }
 
     public interface BubbleUIServiceListener {
-        void onBubbleSpringUpdate(Spring sXSpring, Spring sYSpring);
+        void onBubbleSpringPositionUpdate(int x, int y);
     }
 
     /**

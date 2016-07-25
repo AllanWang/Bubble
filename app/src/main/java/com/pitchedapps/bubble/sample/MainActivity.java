@@ -10,17 +10,19 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.pitchedapps.bubble.library.BubbleActivity;
+import com.pitchedapps.bubble.library.BubbleService;
 import com.pitchedapps.bubble.library.ui.BubbleUI;
 
 import java.util.Random;
 
-public class MainActivity extends BubbleActivity implements BubbleUI.BubbleInteractionListener {
+public class MainActivity extends BubbleActivity implements BubbleService.BubbleActivityServiceListener {
 
     private int i = 0;
 
     @Override
     protected void onServiceFirstRun() {
         mBubbleService.linkBubbles();
+        mBubbleService.addActivityListener(this);
     }
 
     @Override
@@ -36,7 +38,7 @@ public class MainActivity extends BubbleActivity implements BubbleUI.BubbleInter
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 if (mBounded) {
-                    TestUI testUI = new TestUI(/*Context*/ MainActivity.this, String.valueOf(i), /*BubbleInteractionListener*/ MainActivity.this);
+                    TestUI testUI = new TestUI(MainActivity.this, String.valueOf(i));
                     mBubbleService.addBubble(testUI);
                     i++;
                 }
@@ -84,8 +86,6 @@ public class MainActivity extends BubbleActivity implements BubbleUI.BubbleInter
 
     @Override
     public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
-        if (mBounded) {
-            mBubbleService.updateBubblePositions();
-        }
+
     }
 }

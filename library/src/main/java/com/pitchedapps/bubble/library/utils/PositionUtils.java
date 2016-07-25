@@ -20,10 +20,16 @@ public class PositionUtils {
 
     }
 
+
     public interface forLoopCallback {
         void forEach(BubbleUI bubbleUI, int position);
     }
 
+    /**
+     * Callback function for every item in the list
+     *
+     * @param loop
+     */
     public void forEachBubble(@NonNull forLoopCallback loop) {
         for (int i = 0; i < mList.size(); i++) {
             BubbleUI bubbleUI = getBubble(i);
@@ -43,11 +49,12 @@ public class PositionUtils {
     public void addBubble(BubbleUI bubbleUI) {
         if (!isKeyAlreadyUsed(bubbleUI.key)) {
             mList.add(0, bubbleUI.key);
+            mMap.put(bubbleUI.key, bubbleUI);
             updateBubblePositions();
         } else {
+            mMap.put(bubbleUI.key, bubbleUI);
             L.d("Update bubble with key ", bubbleUI.key);
         }
-        mMap.put(bubbleUI.key, bubbleUI);
     }
 
     public BubbleUI getBubble(String key) {
@@ -66,13 +73,26 @@ public class PositionUtils {
 
     public boolean removeBubble(String key) {
         if (!isKeyAlreadyUsed(key)) return false;
+        BubbleUI bubbleUI = getBubble(key);
+        if (bubbleUI != null) bubbleUI.destroySelf(false);
         mMap.remove(key);
         return true;
     }
 
     public boolean removeBubble(int position) {
-        if (position >= mList.size());
+        if (position >= mList.size()) ;
         return removeBubble(mList.get(position));
+    }
+
+    public void destroyAllBubbles() {
+        forEachBubble(new forLoopCallback() {
+            @Override
+            public void forEach(BubbleUI bubbleUI, int position) {
+                bubbleUI.destroySelf(false);
+            }
+        });
+        mList.clear();
+        mMap.clear();
     }
 
     public boolean isKeyAlreadyUsed(String key) {

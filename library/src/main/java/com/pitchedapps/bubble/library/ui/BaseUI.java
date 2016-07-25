@@ -43,7 +43,7 @@ public abstract class BaseUI extends FrameLayout {
     /**
      * Distance in pixels to be displaced when bubbles are getting stacked
      */
-    private static final int STACKING_GAP_PX = Utils.dpToPx(6);
+    public static final int STACKING_GAP_PX = Utils.dpToPx(6);
     /**
      * Helper instance to know screen boundaries that bubble is allowed to travel
      */
