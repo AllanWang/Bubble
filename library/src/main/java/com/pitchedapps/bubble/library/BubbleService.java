@@ -16,6 +16,7 @@ import com.facebook.rebound.Spring;
 import com.pitchedapps.bubble.library.ui.BubbleUI;
 import com.pitchedapps.bubble.library.ui.RemoveBubble;
 import com.pitchedapps.bubble.library.utils.L;
+import com.pitchedapps.bubble.library.utils.PositionUtils;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -25,19 +26,20 @@ import java.util.Map;
 /**
  * Created by Allan Wang on 2016-07-09.
  */
-public class BubbleService extends Service implements BubbleUI.BubbleUIServiceListener{
+public class BubbleService extends Service implements BubbleUI.BubbleUIServiceListener {
 
     protected Context mContext;
+    protected PositionUtils mPositionUtils = new PositionUtils();
     private final Map<String, BubbleUI> mBubbles = new LinkedHashMap<>();
     private IBinder mBinder = new LocalBinder();
     private static BubbleService sInstance;
     private static boolean linkedBubbles = false;
 
     @Override
-    public void onBubbleSpringUpdate(Spring spring) {
+    public void onBubbleSpringUpdate(Spring sXSpring, Spring sYSpring) {
         if (!linkedBubbles) return;
         for (BubbleUI bubble : mBubbles.values()) {
-            bubble.updateSpring(spring);
+            bubble.updateSpring(sXSpring, sYSpring);
         }
     }
 
@@ -49,20 +51,33 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
 
     public void linkBubbles() {
         linkedBubbles = true;
+        updateBubbleLinkStatus();
     }
 
     public void unlinkBubbles() {
         linkedBubbles = false;
+        updateBubbleLinkStatus();
     }
 
     public void updateBubbleLinkStatus() {
+        mPositionUtils.forEachBubble(new PositionUtils.forLoopCallback() {
+            @Override
+            public void forEach(BubbleUI bubbleUI, int position) {
+                bubbleUI.linkBubble(linkedBubbles);
+            }
+        });
+    }
+
+    public void updateBubblePositions() {
+        int max = mBubbles.size() - 1;
         for (BubbleUI bubble : mBubbles.values()) {
-            bubble.IS_LINKED_AND_FIRST = false;
+            bubble.setPosition(max);
+            max--;
         }
-        getFirstBubble().IS_LINKED_AND_FIRST = linkedBubbles;
     }
 
     public BubbleUI getFirstBubble() {
+        if (mBubbles.size() < 1) return null;
         String key = mBubbles.keySet().iterator().next();
         return mBubbles.get(key);
     }
@@ -114,7 +129,9 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
     }
 
     public void addBubble(final BubbleUI newBubble) {
-        mBubbles.put(newBubble.key, newBubble);
+        final String key = newBubble.key;
+        newBubble.linkBubble(linkedBubbles);
+        mPositionUtils.addBubble(newBubble);
         // Before adding new bubbles, call move self to stack distance on existing bubbles to move
         // them a little such that they appear to be stacked
         AnimatorSet animatorSet = new AnimatorSet();
@@ -131,7 +148,6 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
                 if (newBubble != null) {
                     newBubble.reveal();
                     newBubble.addServiceListener(BubbleService.this);
-                    newBubble.IS_LINKED_AND_FIRST = linkedBubbles;
                 }
             }
         });
@@ -140,11 +156,6 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
 
     public boolean isKeyAlreadyUsed(String key) {
         return key == null || mBubbles.containsKey(key);
-    }
-
-    public void removeBubble(String key) {
-        if (!mBubbles.containsKey(key)) return;
-        mBubbles.remove(key);
     }
 
     public void destroyAllBubbles() {

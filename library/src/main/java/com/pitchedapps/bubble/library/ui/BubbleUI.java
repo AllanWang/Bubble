@@ -28,7 +28,8 @@ import com.pitchedapps.bubble.library.utils.Utils;
 public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     public String key;
-    public boolean IS_LINKED_AND_FIRST = false;
+    private boolean linked = false;
+    private int position = 0;
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
     /**
@@ -108,7 +109,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     private BubbleUIServiceListener mServiceListener = new BubbleUIServiceListener() {
         @Override
-        public void onBubbleSpringUpdate(Spring spring) {
+        public void onBubbleSpringUpdate(Spring sXSpring, Spring sYSPring) {
 
         }
     };
@@ -143,6 +144,22 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp * 7);
             MINIMUM_HORIZONTAL_FLING_VELOCITY = Utils.dpToPx(scaledScreenWidthDp);
         }
+    }
+
+    public void linkBubble(boolean b) {
+        linked = b;
+    }
+
+    public boolean isLinked() {
+        return linked;
+    }
+
+    public void setPosition(int i) {
+        position = i;
+    }
+
+    public int getPosition() {
+        return position;
     }
 
     private void setupSprings() {
@@ -348,16 +365,16 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     @Override
     public void onSpringUpdate(Spring spring) {
-        if (IS_LINKED_AND_FIRST) {
-            mServiceListener.onBubbleSpringUpdate(spring);
-        } else {
-            updateSpring(spring);
+        if (position == 0 && linked) {
+            mServiceListener.onBubbleSpringUpdate(mXSpring, mYSpring);
+        } else if (!linked) {
+            updateSpring(mXSpring, mYSpring);
         }
     }
 
-    public void updateSpring(Spring spring) {
-        mWindowParams.x = (int) mXSpring.getCurrentValue();
-        mWindowParams.y = (int) mYSpring.getCurrentValue();
+    public void updateSpring(Spring sXSPring, Spring sYSpring) {
+        mWindowParams.x = (int) sXSPring.getCurrentValue();
+        mWindowParams.y = (int) sYSpring.getCurrentValue();
         updateView();
         checkBounds();
     }
@@ -525,7 +542,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     public interface BubbleUIServiceListener {
-        void onBubbleSpringUpdate(Spring spring);
+        void onBubbleSpringUpdate(Spring sXSpring, Spring sYSpring);
     }
 
     /**

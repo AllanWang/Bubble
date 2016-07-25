@@ -84,6 +84,8 @@ public class MainActivity extends BubbleActivity implements BubbleUI.BubbleInter
 
     @Override
     public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
-
+        if (mBounded) {
+            mBubbleService.updateBubblePositions();
+        }
     }
 }
