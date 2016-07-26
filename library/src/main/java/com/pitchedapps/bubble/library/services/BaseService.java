@@ -15,6 +15,8 @@ import java.util.List;
 
 /**
  * Created by Allan Wang on 2016-07-25.
+ *
+ * Service component that contains all the bubbles and positions
  */
 public class BaseService extends Service{
 
@@ -33,6 +35,11 @@ public class BaseService extends Service{
         }
     }
 
+    /**
+     * Portion of addBubble that adds it to the stored lists
+     *
+     * @param bubbleUI bubble to add
+     */
     public void addBubbleToList(BubbleUI bubbleUI) {
         if (!isKeyAlreadyUsed(bubbleUI.key)) {
             mList.add(0, bubbleUI.key);
@@ -44,7 +51,7 @@ public class BaseService extends Service{
         }
     }
 
-    public BubbleUI getBubble(String key) {
+    public BubbleUI getBubble(@NonNull String key) {
         if (!isKeyAlreadyUsed(key)) return null;
         if (!mMap.containsKey(key)) {
             L.e("Error with key", key);
@@ -58,11 +65,13 @@ public class BaseService extends Service{
         return getBubble(mList.get(position));
     }
 
-    public boolean removeBubble(String key) {
+    public boolean removeBubble(@NonNull String key) {
         if (!isKeyAlreadyUsed(key)) return false;
         BubbleUI bubbleUI = getBubble(key);
         if (bubbleUI != null) bubbleUI.destroySelf(false);
+        mList.remove(mList.indexOf(key)); //TODO check if valid
         mMap.remove(key);
+        updateBubblePositions();
         return true;
     }
 

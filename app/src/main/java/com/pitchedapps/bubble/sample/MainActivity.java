@@ -21,8 +21,8 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
 
     @Override
     protected void onServiceFirstRun() {
-        mBubbleService.linkBubbles();
-        mBubbleService.addActivityListener(this);
+        getBubbleService().setLinkedBubbles(true);
+        getBubbleService().addActivityListener(this);
     }
 
     @Override
@@ -35,11 +35,9 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                if (mBounded) {
+                if (isBubbleServiceBound()) {
                     TestUI testUI = new TestUI(MainActivity.this, String.valueOf(i));
-                    mBubbleService.addBubble(testUI);
+                    getBubbleService().addBubble(testUI);
                     i++;
                 }
 //                launchCustomTab();
@@ -47,13 +45,17 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
 
             }
         });
+        fab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if (isBubbleServiceBound()) {
+                    Snackbar.make(view, "Switched bubble link", Snackbar.LENGTH_LONG).show();
+                    getBubbleService().setLinkedBubbles(!getBubbleService().areBubblesLinked());
+                }
+                return false;
+            }
+        });
     }
-
-//    private void launchCustomTab() {
-//        final Intent webHeadService = new Intent(this, TestService.class);
-//        webHeadService.setData(Uri.parse("https://www.google.ca"));
-//        startService(webHeadService);
-//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

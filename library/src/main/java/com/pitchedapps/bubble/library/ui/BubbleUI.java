@@ -32,6 +32,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private int position = 0;
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
+    private int lastUnlinkedX, lastUnlinkedY;
     /**
      * Coordinate of remove bubble that we can lock on to.
      */
@@ -127,6 +128,9 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         this.key = key;
         mMovementTracker = MovementTracker.obtain();
 
+        lastUnlinkedX = mWindowParams.x;
+        lastUnlinkedY = mWindowParams.y;
+
         calcVelocities();
 
         setupSprings();
@@ -150,12 +154,25 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     public void linkBubble(boolean b, int x, int y) {
-        boolean changed = linked != b;
-        linked = b;
-        if (changed && linked && x != -1 && y != -1) {
+        //from nonlink to link
+        if (!linked && b && x != -1 && y != -1) {
             y += position * BaseUI.STACKING_GAP_PX;
-            //TODO add smooth transition to first bubble
+
+            mXSpring.setSpringConfig(FLING_CONFIG);
+            mXSpring.setEndValue(x);
+
+            mYSpring.setSpringConfig(FLING_CONFIG);
+            mYSpring.setEndValue(y);
+
+        //from link to nonlink
+        } else if (linked && !b) {
+            mXSpring.setSpringConfig(FLING_CONFIG);
+            mXSpring.setEndValue(lastUnlinkedX);
+
+            mYSpring.setSpringConfig(FLING_CONFIG);
+            mYSpring.setEndValue(lastUnlinkedY);
         }
+        linked = b;
     }
 
     public void linkBubbleStart(boolean b, int x, int y) {
@@ -381,10 +398,14 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
     @Override
     public void onSpringUpdate(Spring spring) {
+        int x = (int) mXSpring.getCurrentValue();
+        int y = (int) mYSpring.getCurrentValue();
         if (position == 0 && linked) {
-            mServiceListener.onBubbleSpringPositionUpdate((int) mXSpring.getCurrentValue(), (int) mYSpring.getCurrentValue());
+            mServiceListener.onBubbleSpringPositionUpdate(x, y);
         } else if (!linked) {
-            updateBubblePosition((int) mXSpring.getCurrentValue(), (int) mYSpring.getCurrentValue());
+            lastUnlinkedX = x;
+            lastUnlinkedY = y;
+            updateBubblePosition(x,y);
         }
     }
 

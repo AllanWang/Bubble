@@ -12,8 +12,8 @@ import com.pitchedapps.bubble.library.services.BubbleService;
  * Created by Allan Wang on 2016-07-24.
  */
 public class BubbleActivity extends AppCompatActivity {
-    protected boolean mBounded = false;
-    protected BubbleService mBubbleService;
+    private boolean mBounded = false;
+    private BubbleService mBubbleService;
     private boolean serviceFirstRun = true;
 
     protected void startBubbleService() {
@@ -21,7 +21,15 @@ public class BubbleActivity extends AppCompatActivity {
         startService(intent);
     }
 
-    protected void bindBubbleService() {
+    protected boolean isBubbleServiceBound() {
+        return mBounded;
+    }
+
+    protected BubbleService getBubbleService() {
+        return mBubbleService;
+    }
+
+    private void bindBubbleService() {
         if (!mBounded) {
             Intent intent = new Intent(this, BubbleService.class);
             bindService(intent, mConnection, BIND_AUTO_CREATE);
@@ -29,7 +37,7 @@ public class BubbleActivity extends AppCompatActivity {
         }
     }
 
-    protected void unbindBubbleService() {
+    private void unbindBubbleService() {
         if (mBounded) {
             unbindService(mConnection);
             mBounded = false;

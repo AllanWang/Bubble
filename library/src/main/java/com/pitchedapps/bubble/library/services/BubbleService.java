@@ -68,6 +68,10 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
 
     @Override
     public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
+        if (linkedBubbles) {
+            destroyAllBubbles();
+            return;
+        }
         removeBubble(bubbleUI.key);
         updateBubblePositions();
         mActivityListener.onBubbleDestroyed(bubbleUI, isLastBubble);
@@ -79,20 +83,15 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
         }
     }
 
-    public void linkBubbles() {
-        linkedBubbles = true;
-        updateBubbleLinkStatus();
-    }
-
-    public void unlinkBubbles() {
-        linkedBubbles = false;
-        updateBubbleLinkStatus();
-    }
-
-    public void updateBubbleLinkStatus() {
+    public void setLinkedBubbles(boolean b) {
+        linkedBubbles = b;
         for (BubbleUI bubbleUI : mMap.values()) {
             bubbleUI.linkBubble(linkedBubbles, firstBubbleX, firstBubbleY);
         }
+    }
+
+    public boolean areBubblesLinked() {
+        return linkedBubbles;
     }
 
     @Override
@@ -107,6 +106,7 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
     public static void destroySelf() {
         if (sInstance != null) {
             sInstance.stopSelf();
+            sInstance = null;
         }
     }
 
@@ -123,12 +123,10 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
     public void onCreate() {
         super.onCreate();
         mContext = this;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                L.d("Exited webhead service since overlay permission was revoked");
-                stopSelf();
-                return;
-            }
+        if (!canDrawOverlay()) {
+            L.d("Exited webhead service since overlay permission was revoked");
+            stopSelf();
+            return;
         }
         RemoveBubble.get(this);
         sInstance = this;
@@ -141,11 +139,11 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
         return START_STICKY;
     }
 
-    public void addBubble(final BubbleUI newBubble) {
+    public void addBubble(@NonNull final BubbleUI newBubble) {
         newBubble.linkBubbleStart(linkedBubbles, firstBubbleX, firstBubbleY);
         newBubble.addServiceListener(BubbleService.this);
         newBubble.addInteractionListener(BubbleService.this);
-        newBubble.addToWindow(); //add to view after all the needed variables are given to the Bubble
+        newBubble.addToWindow(); //TODO add to view after all the needed variables are given to the Bubble
         addBubbleToList(newBubble);
         // Before adding new bubbles, call move self to stack distance on existing bubbles to move
         // them a little such that they appear to be stacked
