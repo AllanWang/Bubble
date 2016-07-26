@@ -10,7 +10,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.pitchedapps.bubble.library.BubbleActivity;
-import com.pitchedapps.bubble.library.BubbleService;
+import com.pitchedapps.bubble.library.services.BubbleService;
 import com.pitchedapps.bubble.library.ui.BubbleUI;
 
 import java.util.Random;

@@ -149,8 +149,21 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         }
     }
 
-    public void linkBubble(boolean b) {
+    public void linkBubble(boolean b, int x, int y) {
+        boolean changed = linked != b;
         linked = b;
+        if (changed && linked && x != -1 && y != -1) {
+            y += position * BaseUI.STACKING_GAP_PX;
+            //TODO add smooth transition to first bubble
+        }
+    }
+
+    public void linkBubbleStart(boolean b, int x, int y) {
+        linked = b;
+        if (linked && x != -1 && y != -1) {
+            mWindowParams.x = x;
+            mWindowParams.y = y;
+        }
     }
 
     public boolean isLinked() {

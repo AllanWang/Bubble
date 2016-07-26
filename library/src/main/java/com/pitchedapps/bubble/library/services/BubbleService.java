@@ -1,9 +1,8 @@
-package com.pitchedapps.bubble.library;
+package com.pitchedapps.bubble.library.services;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -16,7 +15,6 @@ import android.support.annotation.NonNull;
 import com.pitchedapps.bubble.library.ui.BubbleUI;
 import com.pitchedapps.bubble.library.ui.RemoveBubble;
 import com.pitchedapps.bubble.library.utils.L;
-import com.pitchedapps.bubble.library.utils.PositionUtils;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -24,14 +22,13 @@ import java.util.List;
 /**
  * Created by Allan Wang on 2016-07-09.
  */
-public class BubbleService extends Service implements BubbleUI.BubbleUIServiceListener, BubbleUI.BubbleInteractionListener {
+public class BubbleService extends BaseService implements BubbleUI.BubbleUIServiceListener, BubbleUI.BubbleInteractionListener {
 
     protected Context mContext;
-    public PositionUtils mPositionUtils = new PositionUtils();
     private IBinder mBinder = new LocalBinder();
     private static BubbleService sInstance;
     private static boolean linkedBubbles = false;
-    private int firstBubbleX, firstBubbleY;
+    private int firstBubbleX = -1, firstBubbleY = -1;
     private BubbleActivityServiceListener mActivityListener = new BubbleActivityServiceListener() {
         @Override
         public void onBubbleClick(BubbleUI bubbleUI) {
@@ -58,12 +55,10 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
         firstBubbleX = x;
         firstBubbleY = y;
         if (!linkedBubbles) return;
-        mPositionUtils.forEachBubble(new PositionUtils.forLoopCallback() {
-            @Override
-            public void forEach(BubbleUI bubbleUI, int position) {
-                bubbleUI.updateBubblePosition(firstBubbleX, firstBubbleY);
-            }
-        });
+        //Excecute in order
+        for (int i = 0; i < mList.size(); i++) {
+            getBubble(i).updateBubblePosition(firstBubbleX, firstBubbleY);
+        }
     }
 
     @Override
@@ -73,7 +68,8 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
 
     @Override
     public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
-        mPositionUtils.updateBubblePositions();
+        removeBubble(bubbleUI.key);
+        updateBubblePositions();
         mActivityListener.onBubbleDestroyed(bubbleUI, isLastBubble);
     }
 
@@ -94,12 +90,9 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
     }
 
     public void updateBubbleLinkStatus() {
-        mPositionUtils.forEachBubble(new PositionUtils.forLoopCallback() {
-            @Override
-            public void forEach(BubbleUI bubbleUI, int position) {
-                bubbleUI.linkBubble(linkedBubbles);
-            }
-        });
+        for (BubbleUI bubbleUI : mMap.values()) {
+            bubbleUI.linkBubble(linkedBubbles, firstBubbleX, firstBubbleY);
+        }
     }
 
     @Override
@@ -149,21 +142,19 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
     }
 
     public void addBubble(final BubbleUI newBubble) {
-        newBubble.linkBubble(linkedBubbles);
+        newBubble.linkBubbleStart(linkedBubbles, firstBubbleX, firstBubbleY);
         newBubble.addServiceListener(BubbleService.this);
         newBubble.addInteractionListener(BubbleService.this);
-        mPositionUtils.addBubble(newBubble);
+        newBubble.addToWindow(); //add to view after all the needed variables are given to the Bubble
+        addBubbleToList(newBubble);
         // Before adding new bubbles, call move self to stack distance on existing bubbles to move
         // them a little such that they appear to be stacked
         AnimatorSet animatorSet = new AnimatorSet();
         final List<Animator> animators = new LinkedList<>();
-        mPositionUtils.forEachBubble(new PositionUtils.forLoopCallback() {
-            @Override
-            public void forEach(BubbleUI bubbleUI, int position) {
-                Animator anim = bubbleUI.getStackDistanceAnimator();
-                if (anim != null) animators.add(anim);
-            }
-        });
+        for (BubbleUI bubbleUI : mMap.values()) {
+            Animator anim = bubbleUI.getStackDistanceAnimator();
+            if (anim != null) animators.add(anim);
+        }
         animatorSet.playTogether(animators);
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
@@ -180,7 +171,7 @@ public class BubbleService extends Service implements BubbleUI.BubbleUIServiceLi
     @Override
     public void onDestroy() {
         L.d("Exiting Bubble service");
-        mPositionUtils.destroyAllBubbles();
+        destroyAllBubbles();
 
 //        LocalBroadcastManager.getInstance(this).unregisterReceiver(mLocalReceiver);
 //        unregisterReceiver(mStopServiceReceiver);

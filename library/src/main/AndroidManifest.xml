@@ -5,7 +5,7 @@
 
     <application>
         <service
-            android:name=".BubbleService"
+            android:name=".services.BubbleService"
             android:enabled="true"
             android:exported="false"/>
     </application>

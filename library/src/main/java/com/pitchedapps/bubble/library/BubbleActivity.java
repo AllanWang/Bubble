@@ -4,11 +4,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.support.annotation.CallSuper;
 import android.support.v7.app.AppCompatActivity;
 
-import com.pitchedapps.bubble.library.ui.BubbleUI;
-import com.pitchedapps.bubble.library.utils.L;
+import com.pitchedapps.bubble.library.services.BubbleService;
 
 /**
  * Created by Allan Wang on 2016-07-24.

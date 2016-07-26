@@ -1,8 +1,13 @@
-package com.pitchedapps.bubble.library.utils;
+package com.pitchedapps.bubble.library.services;
 
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.pitchedapps.bubble.library.ui.BubbleUI;
+import com.pitchedapps.bubble.library.utils.L;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,42 +16,24 @@ import java.util.List;
 /**
  * Created by Allan Wang on 2016-07-25.
  */
-public class PositionUtils {
+public class BaseService extends Service{
 
-    private List<String> mList = new ArrayList<>();
-    private HashMap<String, BubbleUI> mMap = new HashMap<>();
+    protected List<String> mList = new ArrayList<>();
+    protected HashMap<String, BubbleUI> mMap = new HashMap<>();
 
-    public PositionUtils() {
-
-    }
-
-
-    public interface forLoopCallback {
-        void forEach(BubbleUI bubbleUI, int position);
-    }
-
-    /**
-     * Callback function for every item in the list
-     *
-     * @param loop
-     */
-    public void forEachBubble(@NonNull forLoopCallback loop) {
-        for (int i = 0; i < mList.size(); i++) {
-            BubbleUI bubbleUI = getBubble(i);
-            loop.forEach(bubbleUI, i);
-        }
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     public void updateBubblePositions() {
-        forEachBubble(new forLoopCallback() {
-            @Override
-            public void forEach(BubbleUI bubbleUI, int position) {
-                bubbleUI.setPosition(position);
-            }
-        });
+        for (int i = 0; i < mList.size(); i++) {
+            getBubble(i).setPosition(i);
+        }
     }
 
-    public void addBubble(BubbleUI bubbleUI) {
+    public void addBubbleToList(BubbleUI bubbleUI) {
         if (!isKeyAlreadyUsed(bubbleUI.key)) {
             mList.add(0, bubbleUI.key);
             mMap.put(bubbleUI.key, bubbleUI);
@@ -80,17 +67,13 @@ public class PositionUtils {
     }
 
     public boolean removeBubble(int position) {
-        if (position >= mList.size()) ;
-        return removeBubble(mList.get(position));
+        return position < mList.size() && removeBubble(mList.get(position));
     }
 
     public void destroyAllBubbles() {
-        forEachBubble(new forLoopCallback() {
-            @Override
-            public void forEach(BubbleUI bubbleUI, int position) {
-                bubbleUI.destroySelf(false);
-            }
-        });
+        for (BubbleUI bubbleUI : mMap.values()) {
+            bubbleUI.destroySelf(false);
+        }
         mList.clear();
         mMap.clear();
     }

@@ -126,12 +126,14 @@ public abstract class BaseUI extends FrameLayout {
 
         BUBBLE_COUNT++;
 
-        sWindowManager.addView(this, mWindowParams);
-
         sXDrawable = new IconicsDrawable(context)
                 .icon(GoogleMaterial.Icon.gmd_clear)
                 .color(Color.WHITE)
                 .sizeDp(18);
+    }
+
+    public void addToWindow() { //TODO check null for sWindowManager
+        sWindowManager.addView(this, mWindowParams);
     }
 
     protected int getColorFromRes(@ColorRes int i) {
