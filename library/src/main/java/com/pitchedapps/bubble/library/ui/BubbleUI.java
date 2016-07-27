@@ -63,7 +63,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     /**
      * Minimum velocity needed to fling the bubble to the other side
      */
-    private static int HORIZONTAL_FLING_THRESHHOLD = 0;
+    private static int HORIZONTAL_FLING_THRESHOLD = 0;
     /**
      * Touch slop of the device
      */
@@ -84,7 +84,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private static final SpringConfig FLING_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(50, 5);
     private static final SpringConfig FLY_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(20, 5);
     private static final SpringConfig DRAG_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(5, 1.8);
-    private static final SpringConfig NO_TENSION_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 1.8); //tension was 0
+    private static final SpringConfig NO_TENSION_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 2); //was 0, 1.8
     private static final SpringConfig SNAP_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(100, 7);
     /**
      * Movement tracker instance, that is used to adjust X and Y velocity calculated by {@link #mGestureDetector}.
@@ -151,9 +151,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp * 7);
             MINIMUM_HORIZONTAL_FLING_VELOCITY = Utils.dpToPx(scaledScreenWidthDp);
         }
-        if (HORIZONTAL_FLING_THRESHHOLD == 0) {
+        if (HORIZONTAL_FLING_THRESHOLD == 0) {
             int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp / 5);
-            HORIZONTAL_FLING_THRESHHOLD = Utils.dpToPx(scaledScreenWidthDp);
+            HORIZONTAL_FLING_THRESHOLD = Utils.dpToPx(scaledScreenWidthDp);
+            L.e("THRESH", HORIZONTAL_FLING_THRESHOLD);
         }
     }
 
@@ -645,32 +646,35 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             mDragging = false;
 //            L.e("ORIG", velocityX, velocityY);
 
-            float[] adjustedVelocities = mMovementTracker.getAdjustedVelocities(velocityX, velocityY);
-
-            if (adjustedVelocities == null) {
-                float[] down = new float[]{e1.getRawX(), e1.getRawY()};
-                float[] up = new float[]{e2.getRawX(), e2.getRawY()};
-                adjustedVelocities = MovementTracker.adjustVelocities(down, up, velocityX, velocityY);
-            }
-
-            if (adjustedVelocities != null) {
+//            float[] adjustedVelocities = mMovementTracker.getAdjustedVelocities(velocityX, velocityY);
+//
+//            if (adjustedVelocities == null) {
+//                float[] down = new float[]{e1.getRawX(), e1.getRawY()};
+//                float[] up = new float[]{e2.getRawX(), e2.getRawY()};
+//                adjustedVelocities = MovementTracker.adjustVelocities(down, up, velocityX, velocityY);
+//            }
+//
+//            if (adjustedVelocities != null) {
                 mWasFlung = true;
-
-                float velocityX2 = interpolateXVelocity(e2, adjustedVelocities[0]);
+//
+//                float velocityX2 = interpolateXVelocity(e2, adjustedVelocities[0]);
+////                float velocityY2 = adjustedVelocities[1];
 //                float velocityY2 = adjustedVelocities[1];
-                float velocityY2 = adjustedVelocities[1];
-                float testVelocityY = velocityY2 * Math.abs(velocityX2/velocityX);
-                if (Math.abs(testVelocityY) < Math.abs(velocityX2 * 1.5)) {
-                    velocityY2 = testVelocityY;
-                }
-
+//                float testVelocityY = velocityY2 * Math.abs(velocityX2/velocityX);
+//                if (Math.abs(testVelocityY) < Math.abs(velocityX2 * 1.5)) {
+//                    velocityY2 = testVelocityY;
+//                }
+//
                 mXSpring.setSpringConfig(NO_TENSION_CONFIG);
                 mYSpring.setSpringConfig(NO_TENSION_CONFIG);
-//                L.e("NEW", velocityX2, velocityY2);
-                mXSpring.setVelocity(velocityX2);
-                mYSpring.setVelocity(velocityY2);
-                return true;
-            }
+////                L.e("NEW", velocityX2, velocityY2);
+//                mXSpring.setVelocity(velocityX2);
+//                mYSpring.setVelocity(velocityY2);
+//                return true;
+//            }
+//L.e("NEWX", testAdjust(velocityX));
+            mXSpring.setVelocity(testAdjust(velocityX));
+            mYSpring.setVelocity(velocityY);
             return false;
         }
 
@@ -687,19 +691,24 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         private float interpolateXVelocity(MotionEvent upEvent, float velocityX) {
             float x = upEvent.getRawX() / sDispWidth;
             if (velocityX > 0) {
-                if (velocityX > HORIZONTAL_FLING_THRESHHOLD) {
+                if (velocityX > HORIZONTAL_FLING_THRESHOLD) {
                     velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
                 } else {
                     velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
                 }
             } else {
-                if (-velocityX > HORIZONTAL_FLING_THRESHHOLD) {
+                if (-velocityX > HORIZONTAL_FLING_THRESHOLD) {
                     velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
                 } else {
                     velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
                 }
             }
             return velocityX;
+        }
+
+        private float testAdjust(float velocity) {
+            L.e("XX", velocity);
+            return (Math.abs(velocity) < HORIZONTAL_FLING_THRESHOLD ? -velocity : velocity);
         }
     }
 
