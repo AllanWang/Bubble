@@ -41,13 +41,13 @@ public class BaseService extends Service{
      * @param bubbleUI bubble to add
      */
     public void addBubbleToList(BubbleUI bubbleUI) {
-        if (!isKeyAlreadyUsed(bubbleUI.key)) {
-            mList.add(0, bubbleUI.key);
-            mMap.put(bubbleUI.key, bubbleUI);
+        if (!isKeyAlreadyUsed(bubbleUI.getKey())) {
+            mList.add(0, bubbleUI.getKey());
+            mMap.put(bubbleUI.getKey(), bubbleUI);
             updateBubblePositions();
         } else {
-            mMap.put(bubbleUI.key, bubbleUI);
-            L.d("Update bubble with key ", bubbleUI.key);
+            mMap.put(bubbleUI.getKey(), bubbleUI);
+            L.d("Update bubble with key ", bubbleUI.getKey());
         }
     }
 

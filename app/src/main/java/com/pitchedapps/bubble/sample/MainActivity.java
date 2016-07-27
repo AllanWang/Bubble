@@ -52,7 +52,7 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
                     Snackbar.make(view, "Switched bubble link", Snackbar.LENGTH_LONG).show();
                     getBubbleService().setLinkedBubbles(!getBubbleService().areBubblesLinked());
                 }
-                return false;
+                return true;
             }
         });
     }

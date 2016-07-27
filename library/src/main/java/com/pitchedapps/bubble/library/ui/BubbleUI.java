@@ -27,9 +27,6 @@ import com.pitchedapps.bubble.library.utils.Utils;
 @SuppressLint("ViewConstructor")
 public abstract class BubbleUI extends BaseUI implements SpringListener {
 
-    public String key;
-    private boolean linked = false;
-    private int position = 0;
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
     private int lastUnlinkedX, lastUnlinkedY;
@@ -157,6 +154,9 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         //from nonlink to link
         if (!linked && b && x != -1 && y != -1) {
             y += position * BaseUI.STACKING_GAP_PX;
+
+            lastUnlinkedX = mWindowParams.x;
+            lastUnlinkedY = mWindowParams.y;
 
             mXSpring.setSpringConfig(FLING_CONFIG);
             mXSpring.setEndValue(x);
@@ -403,8 +403,6 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         if (position == 0 && linked) {
             mServiceListener.onBubbleSpringPositionUpdate(x, y);
         } else if (!linked) {
-            lastUnlinkedX = x;
-            lastUnlinkedY = y;
             updateBubblePosition(x,y);
         }
     }
@@ -475,16 +473,16 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private void stickToWall() {
         mXSpring.setSpringConfig(FLING_CONFIG);
         mXSpring.setEndValue((mWindowParams.x > sDispWidth / 2) ? sScreenBounds.right : sScreenBounds.left);
-        L.e("Restored X");
+        L.d("Restored X");
 
         if (mWindowParams.y < sScreenBounds.top) {
             mYSpring.setSpringConfig(FLING_CONFIG);
             mYSpring.setEndValue(sScreenBounds.top);
-            L.e("Restored Y");
+            L.d("Restored Y");
         } else if (mWindowParams.y > sScreenBounds.bottom) {
             mYSpring.setSpringConfig(FLING_CONFIG);
             mYSpring.setEndValue(sScreenBounds.bottom);
-            L.e("Restored Y");
+            L.d("Restored Y");
         }
     }
 
@@ -613,7 +611,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
                 try {
                     mScaleSpring.setAtRest();
                 } catch (Exception e) {
-                    L.e("Error : %s", e.getMessage());
+                    L.e("Error : ", e.getMessage());
                 }
                 mContentGroup.animate()
                         .scaleX(0.0f)

@@ -41,6 +41,10 @@ import com.pitchedapps.bubble.library.utils.Utils;
 public abstract class BaseUI extends FrameLayout {
     protected Context mContext;
     /**
+     * Unique key of object
+     */
+    protected String key;
+    /**
      * Distance in pixels to be displaced when bubbles are getting stacked
      */
     public static final int STACKING_GAP_PX = Utils.dpToPx(6);
@@ -57,9 +61,17 @@ public abstract class BaseUI extends FrameLayout {
      */
     private static WindowManager sWindowManager;
     /**
+     * is the bubble linked with the other bubbles
+     */
+    protected boolean linked = false;
+    /**
+     * position of bubble
+     */
+    protected int position = 0;
+    /**
      * Window parameters used to track and update bubbles post creation;
      */
-    WindowManager.LayoutParams mWindowParams;
+    public WindowManager.LayoutParams mWindowParams; //TODO remove public
     /**
      * Color of the bubble when removed
      */
@@ -88,8 +100,14 @@ public abstract class BaseUI extends FrameLayout {
         void callback();
     }
 
-    protected abstract @NonNull FrameLayout inflateContent(Context context);
-    protected abstract @NonNull ImageView setImageView(FrameLayout frameLayout);
+    protected abstract
+    @NonNull
+    FrameLayout inflateContent(Context context);
+
+    protected abstract
+    @NonNull
+    ImageView setImageView(FrameLayout frameLayout);
+
     protected abstract void setViewElevations(int px);
 
     protected FrameLayout getFrameLayoutFromID(@LayoutRes int id) {
@@ -101,7 +119,7 @@ public abstract class BaseUI extends FrameLayout {
         return (ImageView) findViewById(id);
     }
 
-    BaseUI(@NonNull Context context)  {
+    BaseUI(@NonNull Context context) {
         super(context);
         mContext = context;
 
@@ -122,7 +140,6 @@ public abstract class BaseUI extends FrameLayout {
         mWindowParams.gravity = Gravity.TOP | Gravity.START;
 
         initDisplayMetrics();
-        setSpawnLocation();
 
         BUBBLE_COUNT++;
 
@@ -132,8 +149,16 @@ public abstract class BaseUI extends FrameLayout {
                 .sizeDp(18);
     }
 
+    /**
+     * Add view after all o ther variables are set after the constructor
+     */
     public void addToWindow() { //TODO check null for sWindowManager
+        setSpawnLocation();
         sWindowManager.addView(this, mWindowParams);
+    }
+
+    public String getKey() {
+        return key;
     }
 
     protected int getColorFromRes(@ColorRes int i) {
@@ -159,15 +184,15 @@ public abstract class BaseUI extends FrameLayout {
      */
     private void setSpawnLocation() {
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-//            @SuppressLint("RtlHardcoded")
+            //            @SuppressLint("RtlHardcoded")
             @Override
             public void onGlobalLayout() {
                 if (sScreenBounds == null)
                     sScreenBounds = new ScreenBounds(sDispWidth, sDispHeight, getWidth());
 
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                mWindowParams.x = sScreenBounds.right;
+                if (!linked || position == 0)
+                    mWindowParams.x = sScreenBounds.right;
                 updateView();
             }
         });

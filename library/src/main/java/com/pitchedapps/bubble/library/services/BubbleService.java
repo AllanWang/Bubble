@@ -72,7 +72,7 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
             destroyAllBubbles();
             return;
         }
-        removeBubble(bubbleUI.key);
+        removeBubble(bubbleUI.getKey());
         updateBubblePositions();
         mActivityListener.onBubbleDestroyed(bubbleUI, isLastBubble);
     }
@@ -144,6 +144,7 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
         newBubble.addServiceListener(BubbleService.this);
         newBubble.addInteractionListener(BubbleService.this);
         newBubble.addToWindow(); //TODO add to view after all the needed variables are given to the Bubble
+        L.e("New Bubble", newBubble.mWindowParams.x, newBubble.mWindowParams.y);
         addBubbleToList(newBubble);
         // Before adding new bubbles, call move self to stack distance on existing bubbles to move
         // them a little such that they appear to be stacked
