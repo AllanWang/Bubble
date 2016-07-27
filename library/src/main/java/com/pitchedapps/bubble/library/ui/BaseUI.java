@@ -191,7 +191,7 @@ public abstract class BaseUI extends FrameLayout {
                     sScreenBounds = new ScreenBounds(sDispWidth, sDispHeight, getWidth());
 
                 getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                if (!linked || position == 0)
+                if (!linked || BUBBLE_COUNT <= 1) //first bubble or no bubble (subject to change)
                     mWindowParams.x = sScreenBounds.right;
                 updateView();
             }
@@ -242,7 +242,7 @@ public abstract class BaseUI extends FrameLayout {
     @Nullable
     public ValueAnimator getStackDistanceAnimator() {
         ValueAnimator animator = null;
-        if (!mUserManuallyMoved) {
+        if (linked || !mUserManuallyMoved) {
             animator = ValueAnimator.ofInt(mWindowParams.y, mWindowParams.y + STACKING_GAP_PX);
             animator.setInterpolator(new FastOutLinearInInterpolator());
             animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {

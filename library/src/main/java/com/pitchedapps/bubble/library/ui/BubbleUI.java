@@ -61,6 +61,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      */
     private static int MINIMUM_HORIZONTAL_FLING_VELOCITY = 0;
     /**
+     * Minimum velocity needed to fling the bubble to the other side
+     */
+    private static int HORIZONTAL_FLING_THRESHHOLD = 0;
+    /**
      * Touch slop of the device
      */
     private final int mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
@@ -78,7 +82,9 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private Spring mXSpring, mYSpring, mScaleSpring;
 
     private static final SpringConfig FLING_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(50, 5);
-    private static final SpringConfig DRAG_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 1.8);
+    private static final SpringConfig FLY_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(20, 5);
+    private static final SpringConfig DRAG_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(5, 1.8);
+    private static final SpringConfig NO_TENSION_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 1.8); //tension was 0
     private static final SpringConfig SNAP_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(100, 7);
     /**
      * Movement tracker instance, that is used to adjust X and Y velocity calculated by {@link #mGestureDetector}.
@@ -116,17 +122,14 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
      * Inits the bubble and attaches to the system window. It is assumed that draw over other apps permission is
      * granted for 6.0+.
      *
-     * @param context  Service
-     * @param key      Key for bubble for the linkedhashmap
+     * @param context Service
+     * @param key     Key for bubble for the linkedhashmap
      */
     public BubbleUI(@NonNull Context context, @NonNull String key) {
         super(context);
 
         this.key = key;
         mMovementTracker = MovementTracker.obtain();
-
-        lastUnlinkedX = mWindowParams.x;
-        lastUnlinkedY = mWindowParams.y;
 
         calcVelocities();
 
@@ -148,6 +151,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp * 7);
             MINIMUM_HORIZONTAL_FLING_VELOCITY = Utils.dpToPx(scaledScreenWidthDp);
         }
+        if (HORIZONTAL_FLING_THRESHHOLD == 0) {
+            int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp / 5);
+            HORIZONTAL_FLING_THRESHHOLD = Utils.dpToPx(scaledScreenWidthDp);
+        }
     }
 
     public void linkBubble(boolean b, int x, int y) {
@@ -158,18 +165,18 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             lastUnlinkedX = mWindowParams.x;
             lastUnlinkedY = mWindowParams.y;
 
-            mXSpring.setSpringConfig(FLING_CONFIG);
+            mXSpring.setSpringConfig(FLY_CONFIG);
             mXSpring.setEndValue(x);
 
-            mYSpring.setSpringConfig(FLING_CONFIG);
+            mYSpring.setSpringConfig(FLY_CONFIG);
             mYSpring.setEndValue(y);
 
-        //from link to nonlink
+            //from link to nonlink
         } else if (linked && !b) {
-            mXSpring.setSpringConfig(FLING_CONFIG);
+            mXSpring.setSpringConfig(FLY_CONFIG);
             mXSpring.setEndValue(lastUnlinkedX);
 
-            mYSpring.setSpringConfig(FLING_CONFIG);
+            mYSpring.setSpringConfig(FLY_CONFIG);
             mYSpring.setEndValue(lastUnlinkedY);
         }
         linked = b;
@@ -180,6 +187,8 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         if (linked && x != -1 && y != -1) {
             mWindowParams.x = x;
             mWindowParams.y = y;
+            lastUnlinkedX = mWindowParams.x;
+            lastUnlinkedY = mWindowParams.y;
         }
     }
 
@@ -217,6 +226,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     public boolean onTouchEvent(MotionEvent event) {
         // Don't react to any touch event and consume it when we are being destroyed
         if (mDestroyed) return true;
+        if (linked && position != 0) return true;
         try {
             // Reset gesture flag on each event
             mWasFlung = false;
@@ -403,7 +413,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         if (position == 0 && linked) {
             mServiceListener.onBubbleSpringPositionUpdate(x, y);
         } else if (!linked) {
-            updateBubblePosition(x,y);
+            updateBubblePosition(x, y);
         }
     }
 
@@ -633,6 +643,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             mDragging = false;
+//            L.e("ORIG", velocityX, velocityY);
 
             float[] adjustedVelocities = mMovementTracker.getAdjustedVelocities(velocityX, velocityY);
 
@@ -645,13 +656,19 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
             if (adjustedVelocities != null) {
                 mWasFlung = true;
 
-                velocityX = interpolateXVelocity(e2, adjustedVelocities[0]);
+                float velocityX2 = interpolateXVelocity(e2, adjustedVelocities[0]);
+//                float velocityY2 = adjustedVelocities[1];
+                float velocityY2 = adjustedVelocities[1];
+                float testVelocityY = velocityY2 * Math.abs(velocityX2/velocityX);
+                if (Math.abs(testVelocityY) < Math.abs(velocityX2 * 1.5)) {
+                    velocityY2 = testVelocityY;
+                }
 
-                mXSpring.setSpringConfig(DRAG_CONFIG);
-                mYSpring.setSpringConfig(DRAG_CONFIG);
-
-                mXSpring.setVelocity(velocityX);
-                mYSpring.setVelocity(adjustedVelocities[1]);
+                mXSpring.setSpringConfig(NO_TENSION_CONFIG);
+                mYSpring.setSpringConfig(NO_TENSION_CONFIG);
+//                L.e("NEW", velocityX2, velocityY2);
+                mXSpring.setVelocity(velocityX2);
+                mYSpring.setVelocity(velocityY2);
                 return true;
             }
             return false;
@@ -670,9 +687,17 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         private float interpolateXVelocity(MotionEvent upEvent, float velocityX) {
             float x = upEvent.getRawX() / sDispWidth;
             if (velocityX > 0) {
-                velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
+                if (velocityX > HORIZONTAL_FLING_THRESHHOLD) {
+                    velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
+                } else {
+                    velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
+                }
             } else {
-                velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
+                if (-velocityX > HORIZONTAL_FLING_THRESHHOLD) {
+                    velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
+                } else {
+                    velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
+                }
             }
             return velocityX;
         }

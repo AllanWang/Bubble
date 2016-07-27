@@ -97,7 +97,7 @@ public class MovementTracker {
     }
 
     public float[] getAdjustedVelocities(float xVelocity, float yVelocity) {
-        int trackingThreshold = (int) (0.25 * mTrackingSize);
+        int trackingThreshold = mTrackingSize / 3;
         float[] velocities;
         if (mXPoints.size() >= trackingThreshold) {
             int downIndex = mXPoints.size() - trackingThreshold;
