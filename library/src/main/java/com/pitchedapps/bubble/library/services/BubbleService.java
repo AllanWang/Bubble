@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -43,6 +44,7 @@ public class BubbleService extends BaseService implements BubbleUI.BubbleUIServi
 
     public interface BubbleActivityServiceListener {
         void onBubbleClick(BubbleUI bubbleUI);
+
         void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble);
     }
 

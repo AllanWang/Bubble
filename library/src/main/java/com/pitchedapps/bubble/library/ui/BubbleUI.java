@@ -30,6 +30,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private static final float TOUCH_DOWN_SCALE = 0.85f;
     private static final float TOUCH_UP_SCALE = 1f;
     private int lastUnlinkedX, lastUnlinkedY;
+
     /**
      * Coordinate of remove bubble that we can lock on to.
      */
@@ -84,7 +85,7 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     private static final SpringConfig FLING_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(50, 5);
     private static final SpringConfig FLY_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(20, 5);
     private static final SpringConfig DRAG_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(5, 1.8);
-    private static final SpringConfig NO_TENSION_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 2); //was 0, 1.8
+    private static final SpringConfig NO_TENSION_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(0, 1.8); //was 0, 1.8
     private static final SpringConfig SNAP_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(100, 7);
     /**
      * Movement tracker instance, that is used to adjust X and Y velocity calculated by {@link #mGestureDetector}.
@@ -147,14 +148,10 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
     }
 
     protected void calcVelocities() {
-        if (MINIMUM_HORIZONTAL_FLING_VELOCITY == 0) {
-            int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp * 7);
-            MINIMUM_HORIZONTAL_FLING_VELOCITY = Utils.dpToPx(scaledScreenWidthDp);
-        }
-        if (HORIZONTAL_FLING_THRESHOLD == 0) {
-            int scaledScreenWidthDp = (getResources().getConfiguration().screenWidthDp / 5);
-            HORIZONTAL_FLING_THRESHOLD = Utils.dpToPx(scaledScreenWidthDp);
-            L.e("THRESH", HORIZONTAL_FLING_THRESHOLD);
+        if (MINIMUM_HORIZONTAL_FLING_VELOCITY == 0 || HORIZONTAL_FLING_THRESHOLD == 0) {
+            int scaledWidthDp = getResources().getConfiguration().screenWidthDp;
+            MINIMUM_HORIZONTAL_FLING_VELOCITY = Utils.dpToPx(scaledWidthDp * 7);
+            HORIZONTAL_FLING_THRESHOLD = Utils.dpToPx(scaledWidthDp / 5);
         }
     }
 
@@ -171,7 +168,6 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
 
             mYSpring.setSpringConfig(FLY_CONFIG);
             mYSpring.setEndValue(y);
-
             //from link to nonlink
         } else if (linked && !b) {
             mXSpring.setSpringConfig(FLY_CONFIG);
@@ -644,45 +640,51 @@ public abstract class BubbleUI extends BaseUI implements SpringListener {
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             mDragging = false;
+            mWasFlung = true;
 //            L.e("ORIG", velocityX, velocityY);
 
-//            float[] adjustedVelocities = mMovementTracker.getAdjustedVelocities(velocityX, velocityY);
-//
-//            if (adjustedVelocities == null) {
-//                float[] down = new float[]{e1.getRawX(), e1.getRawY()};
-//                float[] up = new float[]{e2.getRawX(), e2.getRawY()};
-//                adjustedVelocities = MovementTracker.adjustVelocities(down, up, velocityX, velocityY);
-//            }
-//
-//            if (adjustedVelocities != null) {
-                mWasFlung = true;
-//
-//                float velocityX2 = interpolateXVelocity(e2, adjustedVelocities[0]);
-////                float velocityY2 = adjustedVelocities[1];
-//                float velocityY2 = adjustedVelocities[1];
-//                float testVelocityY = velocityY2 * Math.abs(velocityX2/velocityX);
-//                if (Math.abs(testVelocityY) < Math.abs(velocityX2 * 1.5)) {
-//                    velocityY2 = testVelocityY;
-//                }
-//
-                mXSpring.setSpringConfig(NO_TENSION_CONFIG);
-                mYSpring.setSpringConfig(NO_TENSION_CONFIG);
+            float[] adjustedVelocities = mMovementTracker.getAdjustedVelocities(e1, e2, velocityX, velocityY);
+
+            float velocityX2 = recalculateFlingVelocity(e2, adjustedVelocities[0]);
+            float velocityY2 = adjustedVelocities[1];
+
+            mXSpring.setSpringConfig(NO_TENSION_CONFIG);
+            mYSpring.setSpringConfig(NO_TENSION_CONFIG);
 ////                L.e("NEW", velocityX2, velocityY2);
-//                mXSpring.setVelocity(velocityX2);
-//                mYSpring.setVelocity(velocityY2);
+            mXSpring.setVelocity(velocityX2);
+            mYSpring.setVelocity(velocityY2);
 //                return true;
 //            }
 //L.e("NEWX", testAdjust(velocityX));
-            mXSpring.setVelocity(testAdjust(velocityX));
-            mYSpring.setVelocity(velocityY);
-            return false;
+//            mXSpring.setVelocity((velocityX));
+//            mXSpring.addListener(new AccelerationSpringListener(9.8));
+//            mYSpring.setVelocity(velocityY);
+            return true;
+        }
+
+        private float recalculateFlingVelocity(MotionEvent up, float velocityX) {
+            float x = up.getRawX() / sDispWidth;
+            if (velocityX > 0) {
+                if (velocityX > HORIZONTAL_FLING_THRESHOLD) {
+                    velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
+                } else {
+                    velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
+                }
+            } else {
+                if (-velocityX > HORIZONTAL_FLING_THRESHOLD) {
+                    velocityX = -Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * x);
+                } else {
+                    velocityX = Math.max(velocityX, MINIMUM_HORIZONTAL_FLING_VELOCITY * (1 - x));
+                }
+            }
+            return velocityX;
         }
 
         /**
          * Attempts to figure out the correct X velocity by using {@link #MINIMUM_HORIZONTAL_FLING_VELOCITY}
          * This is needed since if we blindly upscale the velocity, bubbles will jump too quickly
          * when near screen edges. This method proportionally upscales the velocity based on where the
-         * bubble was released to prevent quick  jumps.
+         * bubble was released to prevent quick jumps.
          *
          * @param upEvent   Motion event of last touch release
          * @param velocityX original velocity

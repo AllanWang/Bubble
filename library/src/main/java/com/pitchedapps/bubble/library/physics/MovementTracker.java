@@ -96,20 +96,18 @@ public class MovementTracker {
         mYPoints.clear();
     }
 
-    public float[] getAdjustedVelocities(float xVelocity, float yVelocity) {
+    public float[] getAdjustedVelocities(MotionEvent e1, MotionEvent e2, float xVelocity, float yVelocity) {
         int trackingThreshold = mTrackingSize / 3;
-        float[] velocities;
         if (mXPoints.size() >= trackingThreshold) {
             int downIndex = mXPoints.size() - trackingThreshold;
-
             float[] up = new float[]{mXPoints.getLast(), mYPoints.getLast()};
             float[] down = new float[]{mXPoints.get(downIndex), mYPoints.get(downIndex)};
-
-            velocities = adjustVelocities(down, up, xVelocity, yVelocity);
+            return adjustVelocities(down, up, xVelocity, yVelocity);
         } else {
-            velocities = null;
+            float[] down = new float[]{e1.getRawX(), e1.getRawY()};
+            float[] up = new float[]{e2.getRawX(), e2.getRawY()};
+            return adjustVelocities(down, up, xVelocity, yVelocity);
         }
-        return velocities;
     }
 
     @Override
