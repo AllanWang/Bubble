@@ -1,22 +1,21 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.1"
+    compileSdkVersion rootProject.ext.TARGET_SDK
+    buildToolsVersion rootProject.ext.BUILD_TOOLS
 
     defaultConfig {
         applicationId "com.pitchedapps.bubble.sample"
-        minSdkVersion 22
-        targetSdkVersion 24
+        minSdkVersion 16
+        targetSdkVersion rootProject.ext.TARGET_SDK
         versionCode 1
         versionName "1.0"
     }
 
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
-            output.outputFile = new File(
-                    output.outputFile.parent,
-                    output.outputFile.name.replace("app-release.apk", "BubbleUI-v" + versionName + ".apk"))
+            output.outputFile = new File(output.outputFile.parent,
+                    "${rootProject.ext.APP_TAG}-v${variant.versionName}.apk")
         }
     }
 
@@ -31,7 +30,6 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:24.1.1'
-    compile 'com.android.support:design:24.1.1'
+    compile "com.android.support:design:$rootProject.ext.ANDROID_SUPPORT_LIBS"
     compile project(':library')
 }
