@@ -8,12 +8,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
-import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.view.WindowManager;
 import android.view.animation.BounceInterpolator;
 import android.widget.FrameLayout;
@@ -24,8 +22,9 @@ import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.iconics.IconicsDrawable;
+
 import com.pitchedapps.bubble.library.R;
-import com.pitchedapps.bubble.library.utils.L;
+import com.pitchedapps.bubble.library.logging.BLog;
 import com.pitchedapps.bubble.library.utils.Utils;
 
 /**
@@ -90,7 +89,7 @@ public class RemoveBubble extends FrameLayout {
         if (sOurInstance != null)
             return sOurInstance;
         else {
-            L.d("Creating new instance of remove bubble");
+            BLog.d("Creating new instance of remove bubble");
             WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
             sOurInstance = new RemoveBubble(context, windowManager);
             return sOurInstance;
@@ -109,18 +108,18 @@ public class RemoveBubble extends FrameLayout {
         }
     }
 
-    @Nullable
-    public ViewPropertyAnimator destroyAnimator() {
-        if (sOurInstance == null) return null;
+    public void destroyAnimator(final Runnable endAction) {
+        if (sOurInstance == null || mRemoveBubbleCircle == null) endAction.run();
 
-        if (mRemoveBubbleCircle == null) return null;
-
-        return sOurInstance.mRemoveBubbleCircle.animate()
+        sOurInstance.mRemoveBubbleCircle.animate()
                 .scaleX(0.0f)
                 .scaleY(0.0f)
                 .alpha(0.5f)
                 .setDuration(300)
-                .setInterpolator(new BounceInterpolator());
+                .withLayer()
+                .withEndAction(endAction)
+                .setInterpolator(new BounceInterpolator())
+                .start();
     }
 
     private void destroySelf() {
@@ -140,7 +139,7 @@ public class RemoveBubble extends FrameLayout {
         mCentrePoint = null;
 
         sOurInstance = null;
-        L.d("Remove view detached and killed");
+        BLog.d("Remove view detached and killed");
     }
 
     private int getAdaptWidth() {

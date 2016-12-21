@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * A helper class for tracking items movements. This is needed to correctly apply polarity on calculated velocity
- * by velocity tracker. For example when item is moved from left to right and top to bottom, the
+ * A helper class for tracking web heads movements. This is needed to correctly apply polarity on calculated velocity
+ * by velocity tracker. For example when web head is moved from left to right and top to bottom, the
  * X and Y velocity should be positive. Sometimes that is not the case with raw values given by {@link android.view.VelocityTracker}
  */
 public class MovementTracker {
@@ -96,18 +96,20 @@ public class MovementTracker {
         mYPoints.clear();
     }
 
-    public float[] getAdjustedVelocities(MotionEvent e1, MotionEvent e2, float xVelocity, float yVelocity) {
-        int trackingThreshold = mTrackingSize / 3;
+    public float[] getAdjustedVelocities(float xVelocity, float yVelocity) {
+        int trackingThreshold = (int) (0.25 * mTrackingSize);
+        float[] velocities;
         if (mXPoints.size() >= trackingThreshold) {
             int downIndex = mXPoints.size() - trackingThreshold;
+
             float[] up = new float[]{mXPoints.getLast(), mYPoints.getLast()};
             float[] down = new float[]{mXPoints.get(downIndex), mYPoints.get(downIndex)};
-            return adjustVelocities(down, up, xVelocity, yVelocity);
+
+            velocities = adjustVelocities(down, up, xVelocity, yVelocity);
         } else {
-            float[] down = new float[]{e1.getRawX(), e1.getRawY()};
-            float[] up = new float[]{e2.getRawX(), e2.getRawY()};
-            return adjustVelocities(down, up, xVelocity, yVelocity);
+            velocities = null;
         }
+        return velocities;
     }
 
     @Override
@@ -128,7 +130,7 @@ class SizedQueue<E> extends LinkedList<E> {
      */
     private final int limit;
 
-    public SizedQueue(int limit) {
+    SizedQueue(int limit) {
         this.limit = limit;
     }
 

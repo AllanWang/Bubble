@@ -26,4 +26,7 @@ dependencies {
     compile 'com.facebook.rebound:rebound:0.3.8'
     compile 'com.mikepenz:iconics-core:2.8.1@aar'
     compile 'com.mikepenz:google-material-typeface:2.2.0.3.original@aar'
+    compile 'com.jakewharton.timber:timber:4.4.0'
+    compile 'com.github.nekocode:Badge:1.6.2'
+
 }

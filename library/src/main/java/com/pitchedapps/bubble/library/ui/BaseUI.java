@@ -38,7 +38,7 @@ import com.pitchedapps.bubble.library.utils.Utils;
  * ViewGroup that holds the bubble UI elements. Allows configuring various parameters in relation
  * to UI like favicon, text indicator and is responsible for inflating all the content.
  */
-public abstract class BaseUI extends FrameLayout {
+abstract class BaseUI extends FrameLayout {
     protected Context mContext;
     /**
      * Unique key of object

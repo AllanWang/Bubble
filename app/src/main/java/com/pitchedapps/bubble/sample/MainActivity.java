@@ -1,45 +1,35 @@
 package com.pitchedapps.bubble.sample;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.pitchedapps.bubble.library.BubbleActivity;
+import com.pitchedapps.bubble.library.logging.BLog;
 import com.pitchedapps.bubble.library.services.BubbleService;
-import com.pitchedapps.bubble.library.ui.BubbleUI;
 
-import java.util.Random;
-
-public class MainActivity extends BubbleActivity implements BubbleService.BubbleActivityServiceListener {
+public class MainActivity extends AppCompatActivity {
 
     private int i = 0;
-
-    @Override
-    protected void onServiceFirstRun() {
-        getBubbleService().setLinkedBubbles(true);
-        getBubbleService().addActivityListener(this);
-    }
+    private String s = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        BLog.enable();
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        BLog.d("Start");
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isBubbleServiceBound()) {
-                    TestUI testUI = new TestUI(MainActivity.this, String.valueOf(i));
-                    getBubbleService().addBubble(testUI);
-                    i++;
-                }
+                s += "s";
+                BubbleService.createBubble(MainActivity.this, s, TestService.class);
 //                launchCustomTab();
 //                BubbleService.StartFromActivity(MainActivity.this);
 
@@ -48,10 +38,10 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
         fab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                if (isBubbleServiceBound()) {
-                    Snackbar.make(view, "Switched bubble link", Snackbar.LENGTH_LONG).show();
-                    getBubbleService().setLinkedBubbles(!getBubbleService().areBubblesLinked());
-                }
+//                if (isBubbleServiceBound()) {
+//                    Snackbar.make(view, "Switched bubble link", Snackbar.LENGTH_LONG).show();
+//                    getBubbleService().setLinkedBubbles(!getBubbleService().areBubblesLinked());
+//                }
                 return true;
             }
         });
@@ -80,14 +70,9 @@ public class MainActivity extends BubbleActivity implements BubbleService.Bubble
     }
 
     @Override
-    public void onBubbleClick(BubbleUI bubbleUI) {
-        Random rnd = new Random();
-        int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
-        bubbleUI.mIcon.setBackgroundColor(color);
+    public void onDestroy() {
+        TestService.stop(MainActivity.this, TestService.class);
+        super.onDestroy();
     }
 
-    @Override
-    public void onBubbleDestroyed(BubbleUI bubbleUI, boolean isLastBubble) {
-
-    }
 }
